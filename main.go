@@ -17,12 +17,65 @@ func main() {
 	command := getCommand(os.Args[1:])
 	if command.err == nil {
 		switch command.id {
-		case cmdNone:
-			fmt.Println("error: unknown state")
 		case cmdInfo:
-			fmt.Println("use --help")
+			printInfo()
+		case cmdInfoExample:
+			printInfoExample()
+		case cmdInfoSplit:
+			printInfoSplit()
+		case cmdInfoConcat:
+			printInfoConcat()
+		case cmdInfoList:
+			printInfoList()
+		case cmdInfoCount:
+			printInfoCount()
+		case cmdInfoCopy:
+			printInfoCopy()
+		case cmdInfoMove:
+			printInfoMove()
+		case cmdInfoRemove:
+			printInfoRemove()
+		case cmdInfoText:
+			printInfoText()
+		case cmdVersion:
+			printVersion()
+		case cmdExampleSplit:
+			printExampleSplit()
+		case cmdExampleConcat:
+			printExampleConcat()
+		case cmdExampleList:
+			printExampleList()
+		case cmdExampleCount:
+			printExampleCount()
+		case cmdExampleCopy:
+			printExampleCopy()
+		case cmdExampleMove:
+			printExampleMove()
+		case cmdExampleRemove:
+			printExampleRemove()
+		case cmdExampleText:
+			printExampleText()
+		case cmdCopyright:
+			printCopyright()
+		case cmdSplit:
+			processSplit(command)
+		case cmdConcat:
+			processConcat(command)
+		case cmdList:
+			processList(command)
+		case cmdCount:
+			processCount(command)
+		case cmdCopy:
+			processCopy(command)
+		case cmdMove:
+			processMove(command)
+		case cmdRemove:
+			processRemove(command)
+		case cmdText:
+			processText(command)
 		}
-	} else {
+	}
+	if command.err != nil {
 		fmt.Println("error:", command.err.Error())
 	}
 }
