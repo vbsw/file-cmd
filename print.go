@@ -74,7 +74,7 @@ func printInfoConcat() {
 	message += "INPUT-FILE\n"
 	message += "    [-i | --input] <file-path>\n"
 	message += "               input file is only one file - the first one\n"
-	message += "               concatenated files must be numbered (see: --example concat)"
+	message += "               concatenated files must be numbered (see: --example concat)\n"
 	message += "OUTPUT-FILE\n"
 	message += "    [-o | --output] <file-path>\n"
 	message += "OPTION\n"
