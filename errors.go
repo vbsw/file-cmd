@@ -45,20 +45,40 @@ func errInputEmpty() error {
 	return errors.New("input path is empty")
 }
 
+func errInputDirEmpty() error {
+	return errors.New("input directory is empty")
+}
+
 func errInputFileNotExist(inputPath string) error {
 	return errors.New("input file does not exist \"" + inputPath + "\"")
+}
+
+func errInputDirNotExist(inputDir string) error {
+	return errors.New("input directory does not exist \"" + inputDir + "\"")
 }
 
 func errInputFileNotAFile(inputPath string) error {
 	return errors.New("input file is not a regular file \"" + inputPath + "\"")
 }
 
+func errInputFileNotADir(inputDir string) error {
+	return errors.New("input directory is not a directory \"" + inputDir + "\"")
+}
+
 func errInputFileWrongPathSyntax(inputPath string) error {
 	return errors.New("input file has wrong path syntax \"" + inputPath + "\"")
 }
 
+func errInputDirWrongPathSyntax(inputDir string) error {
+	return errors.New("input directory has wrong path syntax \"" + inputDir + "\"")
+}
+
 func errInputFileCantRead(inputPath string) error {
 	return errors.New("can't read input file \"" + inputPath + "\"")
+}
+
+func errInputDirCantRead(inputDir string) error {
+	return errors.New("can't read input directory \"" + inputDir + "\"")
 }
 
 func errOutputFileExists(outputPath string) error {

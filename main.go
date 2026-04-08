@@ -26,7 +26,7 @@ func main() {
 		case cmdInfoConcat:
 			printInfoConcat()
 		case cmdInfoList:
-			printInfoList()
+			printInfoList(command.str)
 		case cmdInfoCount:
 			printInfoCount()
 		case cmdInfoCopy:

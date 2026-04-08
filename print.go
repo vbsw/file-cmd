@@ -82,9 +82,9 @@ func printInfoConcat() {
 	fmt.Println(message)
 }
 
-func printInfoList() {
+func printInfoList(cmdStr string) {
 	message := "USAGE\n"
-	message += "    file-cmd ls INPUT-DIR {OPTION} {FILTER}\n"
+	message += "    file-cmd " + cmdStr + " INPUT-DIR {OPTION} {FILTER}\n"
 	message += "                      print files filtered by their content\n"
 	message += "INPUT-DIR\n"
 	message += "    [-i | --input] <directory-path>\n"
@@ -92,8 +92,10 @@ func printInfoList() {
 	message += "    --or              filter is OR (not AND)\n"
 	message += "    -r, --recursive   recursive file iteration\n"
 	message += "    -s, --silent      don't output errors to screen when reading files\n"
+	message += "    -d=D              set delimiter D; default is comma, else space\n"
+	message += "                      empty D is no delimiter\n"
 	message += "FILTER\n"
-	message += "    ( -f=W | W )      filter files by strings W; space or comma are separators"
+	message += "    ( -f=W | W )      filter files by strings W; W is divided by delimiter"
 	fmt.Println(message)
 }
 
