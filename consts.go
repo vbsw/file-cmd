@@ -33,14 +33,14 @@ const (
 	idxOptSplitParts
 	idxOptSplitBytes
 	idxOptSplitLines
-	idxOptSplitOvierwrite
+	idxOptSplitOverwrite
 	idxOptSplitTotal
 )
 
 const (
 	idxOptConcatInput = iota
 	idxOptConcatOutput
-	idxOptConcatOvierwrite
+	idxOptConcatOverwrite
 	idxOptConcatTotal
 )
 
@@ -52,6 +52,60 @@ const (
 	idxOptListFilter
 	idxOptListDelimiter
 	idxOptListTotal
+)
+
+const (
+	idxOptCountInput = iota
+	idxOptCountOr
+	idxOptCountRecursive
+	idxOptCountSilent
+	idxOptCountFilter
+	idxOptCountDelimiter
+	idxOptCountTotal
+)
+
+const (
+	idxOptCopyInput = iota
+	idxOptCopyOutput
+	idxOptCopyOr
+	idxOptCopyOverwrite
+	idxOptCopyRecursive
+	idxOptCopySilent
+	idxOptCopyFilter
+	idxOptCopyDelimiter
+	idxOptCopyTotal
+)
+
+const (
+	idxOptMoveInput = iota
+	idxOptMoveOutput
+	idxOptMoveOr
+	idxOptMoveOverwrite
+	idxOptMoveRecursive
+	idxOptMoveSilent
+	idxOptMoveFilter
+	idxOptMoveDelimiter
+	idxOptMoveTotal
+)
+
+const (
+	idxOptRemoveInput = iota
+	idxOptRemoveOr
+	idxOptRemoveRecursive
+	idxOptRemoveSilent
+	idxOptRemoveFilter
+	idxOptRemoveDelimiter
+	idxOptRemoveTotal
+)
+
+const (
+	idxOptTextOutput = iota
+	idxOptTextOverwrite
+	idxOptTextSize
+	idxOptTextTerminator
+	idxOptTextDelimiter
+	idxOptTextFormat
+	idxOptTextTotal
 )
 
 const (

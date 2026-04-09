@@ -37,60 +37,60 @@ func errUnknownArgument(arg string) error {
 	return errors.New("unknown argument \"" + arg + "\"")
 }
 
+func errUnknownFormat(format string) error {
+	return errors.New("unknown format \"" + format + "\"")
+}
+
+func errIncompatibleFormats(formatA, formatB string) error {
+	return errors.New("incompatible formats \"" + formatA + "\" and \"" + formatB + "\"")
+}
+
 func errNotEnoughArguments(cmdStr string) error {
 	return errors.New("not enough arguments (see: --help " + cmdStr + ")")
 }
 
-func errInputEmpty() error {
-	return errors.New("input path is empty")
+func errPathEmpty(io string) error {
+	return errors.New(io + " path is empty")
 }
 
-func errInputDirEmpty() error {
-	return errors.New("input directory is empty")
+func errDirEmpty(io string) error {
+	return errors.New(io + " directory is empty")
 }
 
-func errInputFileNotExist(inputPath string) error {
-	return errors.New("input file does not exist \"" + inputPath + "\"")
+func errFileNotExist(io, path string) error {
+	return errors.New(io + " file does not exist \"" + path + "\"")
 }
 
-func errInputDirNotExist(inputDir string) error {
-	return errors.New("input directory does not exist \"" + inputDir + "\"")
+func errDirNotExist(io, dir string) error {
+	return errors.New(io + " directory does not exist \"" + dir + "\"")
 }
 
-func errInputFileNotAFile(inputPath string) error {
-	return errors.New("input file is not a regular file \"" + inputPath + "\"")
+func errFileNotAFile(io, path string) error {
+	return errors.New(io + " file is not a regular file \"" + path + "\"")
 }
 
-func errInputFileNotADir(inputDir string) error {
-	return errors.New("input directory is not a directory \"" + inputDir + "\"")
+func errFileNotADir(io, dir string) error {
+	return errors.New(io + " directory is not a directory \"" + dir + "\"")
 }
 
-func errInputFileWrongPathSyntax(inputPath string) error {
-	return errors.New("input file has wrong path syntax \"" + inputPath + "\"")
+func errFileWrongPathSyntax(io, path string) error {
+	return errors.New(io + " file has wrong path syntax \"" + path + "\"")
 }
 
-func errInputDirWrongPathSyntax(inputDir string) error {
-	return errors.New("input directory has wrong path syntax \"" + inputDir + "\"")
+func errDirWrongPathSyntax(io, dir string) error {
+	return errors.New(io + " directory has wrong path syntax \"" + dir + "\"")
 }
 
-func errInputFileCantRead(inputPath string) error {
-	return errors.New("can't read input file \"" + inputPath + "\"")
+func errFileCantRead(io, path string) error {
+	return errors.New("can't read " + io + " file \"" + path + "\"")
 }
 
-func errInputDirCantRead(inputDir string) error {
-	return errors.New("can't read input directory \"" + inputDir + "\"")
+func errDirCantRead(io, dir string) error {
+	return errors.New("can't read " + io + " directory \"" + dir + "\"")
 }
 
-func errOutputFileExists(outputPath string) error {
-	return errors.New("output input file already exists \"" + outputPath + "\"")
-}
-
-func errOutputFileWrongPathSyntax(outputPath string) error {
-	return errors.New("output file has wrong path syntax \"" + outputPath + "\"")
-}
-
-func errOutputEmpty() error {
-	return errors.New("output path is empty")
+func errFileExists(io, path string) error {
+	return errors.New(io + " input file already exists \"" + path + "\"")
 }
 
 func errUnknownState() error {

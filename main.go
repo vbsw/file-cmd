@@ -28,13 +28,13 @@ func main() {
 		case cmdInfoList:
 			printInfoList(command.str)
 		case cmdInfoCount:
-			printInfoCount()
+			printInfoCount(command.str)
 		case cmdInfoCopy:
-			printInfoCopy()
+			printInfoCopy(command.str)
 		case cmdInfoMove:
-			printInfoMove()
+			printInfoMove(command.str)
 		case cmdInfoRemove:
-			printInfoRemove()
+			printInfoRemove(command.str)
 		case cmdInfoText:
 			printInfoText()
 		case cmdVersion:

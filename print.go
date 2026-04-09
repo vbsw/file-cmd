@@ -99,9 +99,9 @@ func printInfoList(cmdStr string) {
 	fmt.Println(message)
 }
 
-func printInfoCount() {
+func printInfoCount(cmdStr string) {
 	message := "USAGE\n"
-	message += "    file-cmd count INPUT-DIR {OPTION} {FILTER}\n"
+	message += "    file-cmd " + cmdStr + " INPUT-DIR {OPTION} {FILTER}\n"
 	message += "                      print number of files matched by filter\n"
 	message += "INPUT-DIR\n"
 	message += "    [-i | --input] <directory-path>\n"
@@ -114,9 +114,9 @@ func printInfoCount() {
 	fmt.Println(message)
 }
 
-func printInfoCopy() {
+func printInfoCopy(cmdStr string) {
 	message := "USAGE\n"
-	message += "    file-cmd cp INPUT-DIR OUTPUT-DIR {OPTION} {FILTER}\n"
+	message += "    file-cmd " + cmdStr + " INPUT-DIR OUTPUT-DIR {OPTION} {FILTER}\n"
 	message += "                      copy files matched by filter\n"
 	message += "INPUT-DIR\n"
 	message += "    [-i | --input] <directory-path>\n"
@@ -124,6 +124,7 @@ func printInfoCopy() {
 	message += "    [-o | --output] <directory-path>\n"
 	message += "OPTION\n"
 	message += "    --or              filter is OR (not AND)\n"
+	message += "    -w                overwrite output files\n"
 	message += "    -r, --recursive   recursive file iteration\n"
 	message += "    -s, --silent      don't output errors to screen when reading files\n"
 	message += "FILTER\n"
@@ -131,9 +132,9 @@ func printInfoCopy() {
 	fmt.Println(message)
 }
 
-func printInfoMove() {
+func printInfoMove(cmdStr string) {
 	message := "USAGE\n"
-	message += "    file-cmd mv INPUT-DIR OUTPUT-DIR {OPTION} {FILTER}\n"
+	message += "    file-cmd " + cmdStr + " INPUT-DIR OUTPUT-DIR {OPTION} {FILTER}\n"
 	message += "                      move files matched by filter\n"
 	message += "INPUT-DIR\n"
 	message += "    [-i | --input] <directory-path>\n"
@@ -141,6 +142,7 @@ func printInfoMove() {
 	message += "    [-o | --output] <directory-path>\n"
 	message += "OPTION\n"
 	message += "    --or              filter is OR (not AND)\n"
+	message += "    -w                overwrite output files\n"
 	message += "    -r, --recursive   recursive file iteration\n"
 	message += "    -s, --silent      don't output errors to screen when reading files\n"
 	message += "FILTER\n"
@@ -148,9 +150,9 @@ func printInfoMove() {
 	fmt.Println(message)
 }
 
-func printInfoRemove() {
+func printInfoRemove(cmdStr string) {
 	message := "USAGE\n"
-	message += "    file-cmd rm INPUT-DIR {OPTION} {FILTER}\n"
+	message += "    file-cmd " + cmdStr + " INPUT-DIR {OPTION} {FILTER}\n"
 	message += "                      delete files matched by filter\n"
 	message += "INPUT-DIR\n"
 	message += "    [-i | --input] <directory-path>\n"
@@ -171,10 +173,11 @@ func printInfoText() {
 	message += "    [-o | --output] <file-path>\n"
 	message += "                      standard output is default\n"
 	message += "OPTION\n"
+	message += "    -w                overwrite output file\n"
 	message += "    -s=N[U]           size N of file, U = unit (k/K, m/M or g/G)\n"
 	message += "    -e=E              use line terminator E (e.g. CRLF or LF or CR)\n"
 	message += "    -d=D              use word delimiter D (space is default)\n"
-	message += "    -f={a|u|l}        output format\n"
+	message += "    -f={a|l|u}        output format\n"
 	message += "                        a = letters, only\n"
 	message += "                        l = lower case, only\n"
 	message += "                        u = upper case, only"
@@ -258,7 +261,7 @@ func printExampleCopy() {
 	message += "    copy files containing \"alice\" or \"bob\" from ./a to ./b\n"
 	message += "    $ file-cmd cp ./a ./b --or alice bob\n"
 	message += "EXAMPLE D\n"
-	message += "    copy files recursivly containing \"2026-02-02\" from ./a to ./b\n"
+	message += "    copy files recursively containing \"2026-02-02\" from ./a to ./b\n"
 	message += "    $ file-cmd cp ./a ./b -r 2026-02-02"
 	fmt.Println(message)
 }
@@ -274,7 +277,7 @@ func printExampleMove() {
 	message += "    move files containing \"alice\" or \"bob\" from ./a to ./b\n"
 	message += "    $ file-cmd mv ./a ./b --or alice bob\n"
 	message += "EXAMPLE D\n"
-	message += "    move files recursivly containing \"2026-02-02\" from ./a to ./b\n"
+	message += "    move files recursively containing \"2026-02-02\" from ./a to ./b\n"
 	message += "    $ file-cmd mv ./a ./b -r 2026-02-02"
 	fmt.Println(message)
 }
@@ -290,7 +293,7 @@ func printExampleRemove() {
 	message += "    delete files containing \"alice\" or \"bob\" from current directory\n"
 	message += "    $ file-cmd rm . --or alice bob\n"
 	message += "EXAMPLE D\n"
-	message += "    delete files recursivly containing \"2026-02-02\" from current directory\n"
+	message += "    delete files recursively containing \"2026-02-02\" from current directory\n"
 	message += "    $ file-cmd rm . -r 2026-02-02"
 	fmt.Println(message)
 }

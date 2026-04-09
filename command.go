@@ -24,14 +24,19 @@ type tCommand struct {
 	str            string
 	delimiter      string
 	inputDir       string
+	outputDir      string
+	terminator     string
 	fileNameFilter []string
-	filter         []string
+	contentFilter  []string
 	parts, lines   int
 	id             int
 	overwrite      bool
 	or             bool
 	recursive      bool
 	silent         bool
+	lettersOnly    bool
+	upperCase      bool
+	lowerCase      bool
 }
 
 func getCommand(osArgs []string) *tCommand {
@@ -68,9 +73,9 @@ func getCmdArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
 	argsList[idxCmdConcat] = cmdLine.Search("concat")
 	argsList[idxCmdList] = cmdLine.Search("ls", "list", "print")
 	argsList[idxCmdCount] = cmdLine.Search("count")
-	argsList[idxCmdCopy] = cmdLine.Search("cp")
-	argsList[idxCmdMove] = cmdLine.Search("mv")
-	argsList[idxCmdRemove] = cmdLine.Search("rm")
+	argsList[idxCmdCopy] = cmdLine.Search("cp", "copy")
+	argsList[idxCmdMove] = cmdLine.Search("mv", "move")
+	argsList[idxCmdRemove] = cmdLine.Search("rm", "remove")
 	argsList[idxCmdText] = cmdLine.Search("text")
 	return argsList
 }
@@ -91,21 +96,21 @@ func validateCmd(command *tCommand, infoArgsList, cmdArgsList []*cl.Arguments, c
 	if command.err == nil && command.id == cmdNone {
 		cmdLine.RevertMatched(infoArgsList...)
 		if cmdArgsList[idxCmdSplit].HasIndex(0) {
-			validateSplit(command, cmdArgsList, cmdLine)
+			validateSplit(command, cmdArgsList[idxCmdSplit], cmdLine)
 		} else if cmdArgsList[idxCmdConcat].HasIndex(0) {
-			validateConcat(command, cmdArgsList, cmdLine)
+			validateConcat(command, cmdArgsList[idxCmdConcat], cmdLine)
 		} else if cmdArgsList[idxCmdList].HasIndex(0) {
-			validateList(command, cmdArgsList, cmdLine)
+			validateList(command, cmdArgsList[idxCmdList], cmdLine)
 		} else if cmdArgsList[idxCmdCount].HasIndex(0) {
-			validateCount(command, cmdArgsList, cmdLine)
+			validateCount(command, cmdArgsList[idxCmdCount], cmdLine)
 		} else if cmdArgsList[idxCmdCopy].HasIndex(0) {
-			validateCopy(command, cmdArgsList, cmdLine)
+			validateCopy(command, cmdArgsList[idxCmdCopy], cmdLine)
 		} else if cmdArgsList[idxCmdMove].HasIndex(0) {
-			validateMove(command, cmdArgsList, cmdLine)
+			validateMove(command, cmdArgsList[idxCmdMove], cmdLine)
 		} else if cmdArgsList[idxCmdRemove].HasIndex(0) {
-			validateRemove(command, cmdArgsList, cmdLine)
+			validateRemove(command, cmdArgsList[idxCmdRemove], cmdLine)
 		} else if cmdArgsList[idxCmdText].HasIndex(0) {
-			validateText(command, cmdArgsList, cmdLine)
+			validateText(command, cmdArgsList[idxCmdText], cmdLine)
 		} else {
 			command.err = errUnknownCommand(cmdLine.Arguments[0])
 		}
@@ -192,15 +197,15 @@ func validateInfoCopyright(command *tCommand, infoArgsList, cmdArgsList []*cl.Ar
 	}
 }
 
-func validateSplit(command *tCommand, cmdArgsList []*cl.Arguments, cmdLine *cl.CommandLine) {
+func validateSplit(command *tCommand, cmdArgs *cl.Arguments, cmdLine *cl.CommandLine) {
 	if len(cmdLine.Arguments) == 1 {
 		command.err = errNotEnoughArguments("split")
 	} else {
 		optArgsList := getOptSplitArgs(cmdLine)
 		argMultiple := getMultiple(optArgsList)
 		if argMultiple == nil {
-			if cmdArgsList[idxCmdSplit].Count() > 1 {
-				cmdLine.RevertMatched(cmdArgsList[idxCmdSplit])
+			if cmdArgs.Count() > 1 {
+				cmdLine.RevertMatched(cmdArgs)
 				cmdLine.Matched[0] = true
 				cmdLine.Matched[len(cmdLine.Arguments)] = false
 			}
@@ -212,9 +217,9 @@ func validateSplit(command *tCommand, cmdArgsList []*cl.Arguments, cmdLine *cl.C
 			}
 			validateOutputFile(command, ".0")
 			command.parts, command.err = argValToInt(optArgsList[idxOptSplitParts], 0, command.err)
-			command.bytes, command.err = argValToBytes(optArgsList[idxOptSplitBytes], 0, command.err)
+			command.bytes, command.err = argValToBytes(optArgsList[idxOptSplitBytes], command.err)
 			command.lines, command.err = argValToInt(optArgsList[idxOptSplitLines], 0, command.err)
-			command.overwrite = optArgsList[idxOptSplitOvierwrite].Available()
+			command.overwrite = optArgsList[idxOptSplitOverwrite].Available()
 			command.id = cmdSplit
 			if command.parts <= 0 && command.bytes <= 0 && command.lines <= 0 {
 				command.parts = 2
@@ -225,23 +230,22 @@ func validateSplit(command *tCommand, cmdArgsList []*cl.Arguments, cmdLine *cl.C
 	}
 }
 
-func validateConcat(command *tCommand, cmdArgsList []*cl.Arguments, cmdLine *cl.CommandLine) {
+func validateConcat(command *tCommand, cmdArgs *cl.Arguments, cmdLine *cl.CommandLine) {
 	if len(cmdLine.Arguments) == 1 {
 		command.err = errNotEnoughArguments("concat")
 	} else {
 		optArgsList := getOptConcatArgs(cmdLine)
 		argMultiple := getMultiple(optArgsList)
 		if argMultiple == nil {
-			if cmdArgsList[idxCmdConcat].Count() > 1 {
-				cmdLine.RevertMatched(cmdArgsList[idxCmdConcat])
+			if cmdArgs.Count() > 1 {
+				cmdLine.RevertMatched(cmdArgs)
 				cmdLine.Matched[0] = true
-				cmdLine.Matched[len(cmdLine.Arguments)] = false
 			}
 			unmatchedArgs := cmdLine.Unmatched()
 			validateInputOutput(command, optArgsList[idxOptConcatInput], optArgsList[idxOptConcatOutput], unmatchedArgs)
 			validateInputConcatFile(command)
 			validateOutputConcatFile(command)
-			command.overwrite = optArgsList[idxOptConcatOvierwrite].Available()
+			command.overwrite = optArgsList[idxOptConcatOverwrite].Available()
 			command.id = cmdConcat
 		} else {
 			command.err = errMultipleUsage(argMultiple.Keys)
@@ -249,70 +253,176 @@ func validateConcat(command *tCommand, cmdArgsList []*cl.Arguments, cmdLine *cl.
 	}
 }
 
-func validateList(command *tCommand, cmdArgsList []*cl.Arguments, cmdLine *cl.CommandLine) {
+func validateList(command *tCommand, cmdArgs *cl.Arguments, cmdLine *cl.CommandLine) {
 	if len(cmdLine.Arguments) == 1 {
-		command.err = errNotEnoughArguments(cmdArgsList[idxCmdList].Keys[0])
+		command.err = errNotEnoughArguments(cmdArgs.Keys[0])
 	} else {
 		optArgsList := getOptListArgs(cmdLine)
 		argMultiple := getMultiple(optArgsList)
 		if argMultiple == nil {
-			if cmdArgsList[idxCmdList].Count() > 1 {
-				cmdLine.RevertMatched(cmdArgsList[idxCmdList])
+			if cmdArgs.Count() > 1 {
+				cmdLine.RevertMatched(cmdArgs)
 				cmdLine.Matched[0] = true
-				cmdLine.Matched[len(cmdLine.Arguments)] = false
 			}
 			unmatchedArgs := cmdLine.Unmatched()
-			validateInputListFile(command, optArgsList[idxOptConcatInput], unmatchedArgs, cmdLine)
+			validateInputDirFile(command, optArgsList[idxOptListInput], unmatchedArgs, cmdLine)
 			command.or = optArgsList[idxOptListOr].Available()
 			command.recursive = optArgsList[idxOptListRecursive].Available()
 			command.silent = optArgsList[idxOptListSilent].Available()
+			command.contentFilter = getFilter(optArgsList[idxOptListFilter], optArgsList[idxOptListDelimiter], unmatchedArgs, cmdLine)
 			command.id = cmdList
-			if optArgsList[idxOptListFilter].Available() {
-				filter := optArgsList[idxOptListFilter].Values[0]
-				if filter > "" {
-					if optArgsList[idxOptListDelimiter].Available() {
-						delimiter := optArgsList[idxOptListDelimiter].Values[0]
-						if delimiter > "" {
-							command.filter = strings.Split(filter, delimiter)
-						} else {
-							command.filter = []string{filter}
-						}
-					} else if strings.IndexByte(filter, ',') >= 0 {
-						command.filter = strings.Split(filter, ",")
-					} else if strings.IndexByte(filter, ' ') >= 0 {
-						command.filter = strings.Split(filter, " ")
-					}
-				}
-			}
-			for i, index := range unmatchedArgs.Indices {
-				if !cmdLine.Matched[index] {
-					command.filter = append(command.filter, unmatchedArgs.Keys[i])
-				}
-			}
 		} else {
 			command.err = errMultipleUsage(argMultiple.Keys)
 		}
 	}
 }
 
-func validateCount(command *tCommand, cmdArgsList []*cl.Arguments, cmdLine *cl.CommandLine) {
-	// TODO
+func validateCount(command *tCommand, cmdArgs *cl.Arguments, cmdLine *cl.CommandLine) {
+	if len(cmdLine.Arguments) == 1 {
+		command.err = errNotEnoughArguments(cmdArgs.Keys[0])
+	} else {
+		optArgsList := getOptCountArgs(cmdLine)
+		argMultiple := getMultiple(optArgsList)
+		if argMultiple == nil {
+			if cmdArgs.Count() > 1 {
+				cmdLine.RevertMatched(cmdArgs)
+				cmdLine.Matched[0] = true
+			}
+			unmatchedArgs := cmdLine.Unmatched()
+			validateInputDirFile(command, optArgsList[idxOptCountInput], unmatchedArgs, cmdLine)
+			command.or = optArgsList[idxOptCountOr].Available()
+			command.recursive = optArgsList[idxOptCountRecursive].Available()
+			command.silent = optArgsList[idxOptCountSilent].Available()
+			command.contentFilter = getFilter(optArgsList[idxOptCountFilter], optArgsList[idxOptCountDelimiter], unmatchedArgs, cmdLine)
+			command.id = cmdCount
+		} else {
+			command.err = errMultipleUsage(argMultiple.Keys)
+		}
+	}
 }
 
-func validateCopy(command *tCommand, cmdArgsList []*cl.Arguments, cmdLine *cl.CommandLine) {
-	// TODO
+func validateCopy(command *tCommand, cmdArgs *cl.Arguments, cmdLine *cl.CommandLine) {
+	if len(cmdLine.Arguments) == 1 {
+		command.err = errNotEnoughArguments(cmdArgs.Keys[0])
+	} else {
+		optArgsList := getOptCopyArgs(cmdLine)
+		argMultiple := getMultiple(optArgsList)
+		if argMultiple == nil {
+			if cmdArgs.Count() > 1 {
+				cmdLine.RevertMatched(cmdArgs)
+				cmdLine.Matched[0] = true
+			}
+			unmatchedArgs := cmdLine.Unmatched()
+			validateInputDirFile(command, optArgsList[idxOptCopyInput], unmatchedArgs, cmdLine)
+			validateOutputDir(command, optArgsList[idxOptCopyInput], unmatchedArgs, cmdLine)
+			command.or = optArgsList[idxOptCopyOr].Available()
+			command.overwrite = optArgsList[idxOptCopyOverwrite].Available()
+			command.recursive = optArgsList[idxOptCopyRecursive].Available()
+			command.silent = optArgsList[idxOptCopySilent].Available()
+			command.contentFilter = getFilter(optArgsList[idxOptCopyFilter], optArgsList[idxOptCopyDelimiter], unmatchedArgs, cmdLine)
+			command.id = cmdCopy
+		} else {
+			command.err = errMultipleUsage(argMultiple.Keys)
+		}
+	}
 }
 
-func validateMove(command *tCommand, cmdArgsList []*cl.Arguments, cmdLine *cl.CommandLine) {
-	// TODO
+func validateMove(command *tCommand, cmdArgs *cl.Arguments, cmdLine *cl.CommandLine) {
+	if len(cmdLine.Arguments) == 1 {
+		command.err = errNotEnoughArguments(cmdArgs.Keys[0])
+	} else {
+		optArgsList := getOptMoveArgs(cmdLine)
+		argMultiple := getMultiple(optArgsList)
+		if argMultiple == nil {
+			if cmdArgs.Count() > 1 {
+				cmdLine.RevertMatched(cmdArgs)
+				cmdLine.Matched[0] = true
+			}
+			unmatchedArgs := cmdLine.Unmatched()
+			validateInputDirFile(command, optArgsList[idxOptMoveInput], unmatchedArgs, cmdLine)
+			validateOutputDir(command, optArgsList[idxOptMoveInput], unmatchedArgs, cmdLine)
+			command.or = optArgsList[idxOptMoveOr].Available()
+			command.overwrite = optArgsList[idxOptMoveOverwrite].Available()
+			command.recursive = optArgsList[idxOptMoveRecursive].Available()
+			command.silent = optArgsList[idxOptMoveSilent].Available()
+			command.contentFilter = getFilter(optArgsList[idxOptMoveFilter], optArgsList[idxOptMoveDelimiter], unmatchedArgs, cmdLine)
+			command.id = cmdMove
+		} else {
+			command.err = errMultipleUsage(argMultiple.Keys)
+		}
+	}
 }
 
-func validateRemove(command *tCommand, cmdArgsList []*cl.Arguments, cmdLine *cl.CommandLine) {
-	// TODO
+func validateRemove(command *tCommand, cmdArgs *cl.Arguments, cmdLine *cl.CommandLine) {
+	if len(cmdLine.Arguments) == 1 {
+		command.err = errNotEnoughArguments(cmdArgs.Keys[0])
+	} else {
+		optArgsList := getOptRemoveArgs(cmdLine)
+		argMultiple := getMultiple(optArgsList)
+		if argMultiple == nil {
+			if cmdArgs.Count() > 1 {
+				cmdLine.RevertMatched(cmdArgs)
+				cmdLine.Matched[0] = true
+			}
+			unmatchedArgs := cmdLine.Unmatched()
+			validateInputDirFile(command, optArgsList[idxOptRemoveInput], unmatchedArgs, cmdLine)
+			command.or = optArgsList[idxOptRemoveOr].Available()
+			command.recursive = optArgsList[idxOptRemoveRecursive].Available()
+			command.silent = optArgsList[idxOptRemoveSilent].Available()
+			command.contentFilter = getFilter(optArgsList[idxOptRemoveFilter], optArgsList[idxOptRemoveDelimiter], unmatchedArgs, cmdLine)
+			command.id = cmdRemove
+		} else {
+			command.err = errMultipleUsage(argMultiple.Keys)
+		}
+	}
 }
 
-func validateText(command *tCommand, cmdArgsList []*cl.Arguments, cmdLine *cl.CommandLine) {
-	// TODO
+func validateText(command *tCommand, cmdArgs *cl.Arguments, cmdLine *cl.CommandLine) {
+	if len(cmdLine.Arguments) == 1 {
+		command.err = errNotEnoughArguments(cmdArgs.Keys[0])
+	} else {
+		optArgsList := getOptTextArgs(cmdLine)
+		argMultiple := getMultiple(optArgsList)
+		if argMultiple == nil {
+			if cmdArgs.Count() > 1 {
+				cmdLine.RevertMatched(cmdArgs)
+				cmdLine.Matched[0] = true
+			}
+			unmatchedArgs := cmdLine.Unmatched()
+			validateOutputTextFile(command, optArgsList[idxOptTextOutput], unmatchedArgs, cmdLine)
+			validateFormat(command, optArgsList[idxOptTextFormat])
+			command.overwrite = optArgsList[idxOptTextOverwrite].Available()
+			command.bytes, command.err = argValToBytes(optArgsList[idxOptTextSize], command.err)
+			command.terminator = optArgsList[idxOptTextTerminator].ValueAt(0, "")
+			command.delimiter = optArgsList[idxOptTextDelimiter].ValueAt(0, "")
+			command.id = cmdText
+		} else {
+			command.err = errMultipleUsage(argMultiple.Keys)
+		}
+	}
+}
+
+func validateFormat(command *tCommand, args *cl.Arguments) {
+	if command.err == nil && args.Available() {
+		format := args.Values[0]
+		if format > "" {
+			for i := 0; i < len(format) && command.err == nil; i++ {
+				b := format[i]
+				if b == 'a' {
+					command.lettersOnly = true
+				} else if b == 'u' {
+					command.upperCase = true
+				} else if b == 'l' {
+					command.lowerCase = true
+				} else {
+					command.err = errUnknownFormat(string(b))
+				}
+			}
+			if command.upperCase && command.lowerCase {
+				command.err = errIncompatibleFormats("u", "l")
+			}
+		}
+	}
 }
 
 func getCmdInfoId(cmdArgsList []*cl.Arguments) int {
@@ -364,7 +474,7 @@ func getOptSplitArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
 	argsList[idxOptSplitParts] = cmdLine.SearchByDelimiter("-p")
 	argsList[idxOptSplitBytes] = cmdLine.SearchByDelimiter("-b")
 	argsList[idxOptSplitLines] = cmdLine.SearchByDelimiter("-l")
-	argsList[idxOptSplitOvierwrite] = cmdLine.Search("-w")
+	argsList[idxOptSplitOverwrite] = cmdLine.Search("-w")
 	argsList[idxOptSplitInput] = cmdLine.SearchByDelimiter("-i", "--input")
 	argsList[idxOptSplitOutput] = cmdLine.SearchByDelimiter("-o", "--output")
 	return argsList
@@ -372,7 +482,7 @@ func getOptSplitArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
 
 func getOptConcatArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
 	argsList := make([]*cl.Arguments, idxOptConcatTotal, idxOptConcatTotal)
-	argsList[idxOptConcatOvierwrite] = cmdLine.Search("-w")
+	argsList[idxOptConcatOverwrite] = cmdLine.Search("-w")
 	argsList[idxOptConcatInput] = cmdLine.SearchByDelimiter("-i", "--input")
 	argsList[idxOptConcatOutput] = cmdLine.SearchByDelimiter("-o", "--output")
 	return argsList
@@ -386,6 +496,65 @@ func getOptListArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
 	argsList[idxOptListInput] = cmdLine.SearchByDelimiter("-i", "--input")
 	argsList[idxOptListFilter] = cmdLine.SearchByDelimiter("-f")
 	argsList[idxOptListDelimiter] = cmdLine.SearchByDelimiter("-d")
+	return argsList
+}
+
+func getOptCountArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
+	argsList := make([]*cl.Arguments, idxOptCountTotal, idxOptCountTotal)
+	argsList[idxOptCountOr] = cmdLine.Search("--or")
+	argsList[idxOptCountRecursive] = cmdLine.Search("-r", "--recursive")
+	argsList[idxOptCountSilent] = cmdLine.Search("-s", "--silent")
+	argsList[idxOptCountInput] = cmdLine.SearchByDelimiter("-i", "--input")
+	argsList[idxOptCountFilter] = cmdLine.SearchByDelimiter("-f")
+	argsList[idxOptCountDelimiter] = cmdLine.SearchByDelimiter("-d")
+	return argsList
+}
+
+func getOptCopyArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
+	argsList := make([]*cl.Arguments, idxOptCopyTotal, idxOptCopyTotal)
+	argsList[idxOptCopyOr] = cmdLine.Search("--or")
+	argsList[idxOptCopyOverwrite] = cmdLine.Search("-w")
+	argsList[idxOptCopyRecursive] = cmdLine.Search("-r", "--recursive")
+	argsList[idxOptCopySilent] = cmdLine.Search("-s", "--silent")
+	argsList[idxOptCopyInput] = cmdLine.SearchByDelimiter("-i", "--input")
+	argsList[idxOptCopyOutput] = cmdLine.SearchByDelimiter("-o", "--output")
+	argsList[idxOptCopyFilter] = cmdLine.SearchByDelimiter("-f")
+	argsList[idxOptCopyDelimiter] = cmdLine.SearchByDelimiter("-d")
+	return argsList
+}
+
+func getOptMoveArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
+	argsList := make([]*cl.Arguments, idxOptMoveTotal, idxOptMoveTotal)
+	argsList[idxOptMoveOr] = cmdLine.Search("--or")
+	argsList[idxOptMoveOverwrite] = cmdLine.Search("-w")
+	argsList[idxOptMoveRecursive] = cmdLine.Search("-r", "--recursive")
+	argsList[idxOptMoveSilent] = cmdLine.Search("-s", "--silent")
+	argsList[idxOptMoveInput] = cmdLine.SearchByDelimiter("-i", "--input")
+	argsList[idxOptMoveOutput] = cmdLine.SearchByDelimiter("-o", "--output")
+	argsList[idxOptMoveFilter] = cmdLine.SearchByDelimiter("-f")
+	argsList[idxOptMoveDelimiter] = cmdLine.SearchByDelimiter("-d")
+	return argsList
+}
+
+func getOptRemoveArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
+	argsList := make([]*cl.Arguments, idxOptRemoveTotal, idxOptRemoveTotal)
+	argsList[idxOptRemoveOr] = cmdLine.Search("--or")
+	argsList[idxOptRemoveRecursive] = cmdLine.Search("-r", "--recursive")
+	argsList[idxOptRemoveSilent] = cmdLine.Search("-s", "--silent")
+	argsList[idxOptRemoveInput] = cmdLine.SearchByDelimiter("-i", "--input")
+	argsList[idxOptRemoveFilter] = cmdLine.SearchByDelimiter("-f")
+	argsList[idxOptRemoveDelimiter] = cmdLine.SearchByDelimiter("-d")
+	return argsList
+}
+
+func getOptTextArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
+	argsList := make([]*cl.Arguments, idxOptTextTotal, idxOptTextTotal)
+	argsList[idxOptTextOverwrite] = cmdLine.Search("-w")
+	argsList[idxOptTextOutput] = cmdLine.SearchByDelimiter("-o", "--output")
+	argsList[idxOptTextSize] = cmdLine.SearchByDelimiter("-s")
+	argsList[idxOptTextTerminator] = cmdLine.SearchByDelimiter("-e")
+	argsList[idxOptTextDelimiter] = cmdLine.SearchByDelimiter("-d")
+	argsList[idxOptTextFormat] = cmdLine.SearchByDelimiter("-f")
 	return argsList
 }
 
@@ -414,7 +583,7 @@ func validateInputOutput(command *tCommand, inputArgs, outputArgs, unmatchedArgs
 			}
 		}
 	} else {
-		command.err = errInputEmpty()
+		command.err = errPathEmpty("input")
 	}
 }
 
@@ -424,19 +593,19 @@ func validateInputFile(command *tCommand) {
 			info, err := os.Stat(command.inputPath)
 			if err == nil {
 				if info == nil {
-					command.err = errInputFileWrongPathSyntax(command.inputPath)
+					command.err = errFileWrongPathSyntax("input", command.inputPath)
 				} else if !info.Mode().IsRegular() {
-					command.err = errInputFileNotAFile(command.inputPath)
+					command.err = errFileNotAFile("input", command.inputPath)
 				}
 			} else if errors.Is(err, os.ErrNotExist) {
-				command.err = errInputFileNotExist(command.inputPath)
+				command.err = errFileNotExist("input", command.inputPath)
 			} else if errors.Is(err, os.ErrInvalid) {
-				command.err = errInputFileWrongPathSyntax(command.inputPath)
+				command.err = errFileWrongPathSyntax("input", command.inputPath)
 			} else {
-				command.err = errInputFileCantRead(command.inputPath)
+				command.err = errFileCantRead("input", command.inputPath)
 			}
 		} else {
-			command.err = errInputEmpty()
+			command.err = errPathEmpty("input")
 		}
 	}
 }
@@ -447,14 +616,12 @@ func validateOutputFile(command *tCommand, suffix string) {
 		if outputPath > "" {
 			_, err := os.Stat(outputPath)
 			if err == nil || !errors.Is(err, os.ErrNotExist) {
-				command.err = errOutputFileExists(command.outputPath)
+				command.err = errFileExists("output", command.outputPath)
 			} else if errors.Is(err, os.ErrInvalid) {
-				command.err = errOutputFileWrongPathSyntax(command.outputPath)
-			} else if !errors.Is(err, os.ErrNotExist) {
-				command.err = errOutputFileExists(command.outputPath)
+				command.err = errFileWrongPathSyntax("output", command.outputPath)
 			}
 		} else {
-			command.err = errOutputEmpty()
+			command.err = errPathEmpty("output")
 		}
 	}
 }
@@ -470,7 +637,7 @@ func validateInputConcatFile(command *tCommand) {
 				validateInputFile(command)
 			}
 		} else {
-			command.err = errInputEmpty()
+			command.err = errPathEmpty("input")
 		}
 	}
 }
@@ -485,52 +652,122 @@ func validateOutputConcatFile(command *tCommand) {
 	validateOutputFile(command, "")
 }
 
-func validateInputListFile(command *tCommand, inputArgs, unmatchedArgs *cl.Arguments, cmdLine *cl.CommandLine) {
+func validateOutputTextFile(command *tCommand, outputArgs, unmatchedArgs *cl.Arguments, cmdLine *cl.CommandLine) {
+	if outputArgs.Available() {
+		command.outputPath = outputArgs.Values[0]
+	} else if unmatchedArgs.Count() > 0 {
+		command.outputPath = unmatchedArgs.Keys[0]
+		if unmatchedArgs.Count() == 1 {
+			cmdLine.Matched[unmatchedArgs.Indices[0]] = true
+			cmdLine.Matched[len(cmdLine.Arguments)] = true
+		} else {
+			command.err = errUnknownArgument(unmatchedArgs.Keys[2])
+		}
+	} else {
+		command.err = errPathEmpty("output")
+	}
+	validateOutputFile(command, "")
+}
+
+func validateInputDirFile(command *tCommand, inputArgs, unmatchedArgs *cl.Arguments, cmdLine *cl.CommandLine) {
 	if inputArgs.Available() {
 		command.inputPath = inputArgs.Values[0]
-	} else if unmatchedArgs.Count() > 0 {
-		command.inputPath = unmatchedArgs.Keys[0]
-		cmdLine.Matched[unmatchedArgs.Indices[0]] = true
 	} else {
-		command.err = errInputEmpty()
+		unmatchedArgIdx := getUnmatchedIdx(unmatchedArgs, cmdLine.Matched)
+		if unmatchedArgIdx >= 0 {
+			command.inputPath = unmatchedArgs.Keys[unmatchedArgIdx]
+			cmdLine.Matched[unmatchedArgs.Indices[unmatchedArgIdx]] = true
+		}
 	}
 	if command.err == nil {
 		if command.inputPath > "" {
 			command.inputDir = command.inputPath
-			validateInputDir(command)
+			validateDir("input", command.inputDir, command)
 			if command.err != nil {
+				fileName := filepath.Base(command.inputPath)
 				command.err = nil
 				command.inputDir = filepath.Dir(command.inputPath)
-				command.fileNameFilter = strings.Split(filepath.Base(command.inputPath), "*")
-				validateInputDir(command)
+				if fileName > "" && fileName != "*" {
+					command.fileNameFilter = strings.Split(fileName, "*")
+				}
+				validateDir("input", command.inputDir, command)
 			}
 		} else {
-			command.err = errInputEmpty()
+			command.err = errPathEmpty("input")
 		}
 	}
 }
 
-func validateInputDir(command *tCommand) {
-	if command.err == nil {
-		if command.inputDir > "" {
-			info, err := os.Stat(command.inputDir)
-			if err == nil {
-				if info == nil {
-					command.err = errInputDirWrongPathSyntax(command.inputDir)
-				} else if !info.Mode().IsDir() {
-					command.err = errInputFileNotADir(command.inputDir)
-				}
-			} else if errors.Is(err, os.ErrNotExist) {
-				command.err = errInputDirNotExist(command.inputDir)
-			} else if errors.Is(err, os.ErrInvalid) {
-				command.err = errInputDirWrongPathSyntax(command.inputDir)
-			} else {
-				command.err = errInputDirCantRead(command.inputDir)
-			}
-		} else {
-			command.err = errInputDirEmpty()
+func validateOutputDir(command *tCommand, outputArgs, unmatchedArgs *cl.Arguments, cmdLine *cl.CommandLine) {
+	if outputArgs.Available() {
+		command.outputPath = outputArgs.Values[0]
+	} else {
+		unmatchedArgIdx := getUnmatchedIdx(unmatchedArgs, cmdLine.Matched)
+		if unmatchedArgIdx >= 0 {
+			command.outputPath = unmatchedArgs.Keys[unmatchedArgIdx]
+			cmdLine.Matched[unmatchedArgs.Indices[unmatchedArgIdx]] = true
 		}
 	}
+	if command.err == nil {
+		if command.outputPath > "" {
+			command.outputDir = command.outputPath
+			validateDir("output", command.outputDir, command)
+		} else {
+			command.err = errPathEmpty("output")
+		}
+	}
+}
+
+func validateDir(io, dir string, command *tCommand) {
+	if command.err == nil {
+		if dir > "" {
+			info, err := os.Stat(dir)
+			if err == nil {
+				if info == nil {
+					command.err = errDirWrongPathSyntax(io, dir)
+				} else if !info.Mode().IsDir() {
+					command.err = errFileNotADir(io, dir)
+				}
+			} else if errors.Is(err, os.ErrNotExist) {
+				command.err = errDirNotExist(io, dir)
+			} else if errors.Is(err, os.ErrInvalid) {
+				command.err = errDirWrongPathSyntax(io, dir)
+			} else {
+				command.err = errDirCantRead(io, dir)
+			}
+		} else {
+			command.err = errDirEmpty(io)
+		}
+	}
+}
+
+func getFilter(filterArgs, delimiterArgs, unmatchedArgs *cl.Arguments, cmdLine *cl.CommandLine) []string {
+	var result []string
+	if filterArgs.Available() {
+		contentFilter := filterArgs.Values[0]
+		if contentFilter > "" {
+			if delimiterArgs.Available() {
+				delimiter := delimiterArgs.Values[0]
+				if delimiter > "" {
+					result = strings.Split(contentFilter, delimiter)
+				} else {
+					result = []string{contentFilter}
+				}
+			} else if strings.IndexByte(contentFilter, ',') >= 0 {
+				result = strings.Split(contentFilter, ",")
+			} else if strings.IndexByte(contentFilter, ' ') >= 0 {
+				result = strings.Split(contentFilter, " ")
+			}
+		}
+	}
+	if unmatchedArgs != nil {
+		for i, index := range unmatchedArgs.Indices {
+			if !cmdLine.Matched[index] {
+				result = append(result, unmatchedArgs.Keys[i])
+			}
+		}
+	}
+	return result
 }
 
 func anyAvailable(argsList []*cl.Arguments) bool {
@@ -592,9 +829,9 @@ func argValToInt(args *cl.Arguments, index int, err error) (int, error) {
 	return 0, err
 }
 
-func argValToBytes(args *cl.Arguments, index int, err error) (int64, error) {
+func argValToBytes(args *cl.Arguments, err error) (int64, error) {
 	if err == nil && args.Available() {
-		value := args.Values[index]
+		value := args.Values[0]
 		if value > "" {
 			var bytes64 int64
 			lastByte := value[len(value)-1]
@@ -623,9 +860,9 @@ func argValToBytes(args *cl.Arguments, index int, err error) (int64, error) {
 				}
 				return bytes64, nil
 			}
-			return bytes64, errArgNotInteger(args.Keys[index], args.Values[index])
+			return bytes64, errArgNotInteger(args.Keys[0], args.Values[0])
 		}
-		return 0, errMissingArgValue(args.Keys[index])
+		return 0, errMissingArgValue(args.Keys[0])
 	}
 	return 0, err
 }
@@ -646,4 +883,25 @@ func rIndex(str string, b byte) int {
 		}
 	}
 	return -1
+}
+
+func getUnmatchedIdx(unmatchedArgs *cl.Arguments, matched []bool) int {
+	if unmatchedArgs != nil {
+		for i, index := range unmatchedArgs.Indices {
+			if !matched[index] {
+				return i
+			}
+		}
+	}
+	return -1
+}
+
+func isEmpty(str string) bool {
+	for i := 0; i < len(str); i++ {
+		b := str[i]
+		if b >= 0 && b <= 32 || b != '*' {
+			return false
+		}
+	}
+	return true
 }
