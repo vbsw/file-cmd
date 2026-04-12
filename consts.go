@@ -51,6 +51,7 @@ const (
 	idxOptListSilent
 	idxOptListFilter
 	idxOptListDelimiter
+	idxOptListThreads
 	idxOptListTotal
 )
 
@@ -61,6 +62,7 @@ const (
 	idxOptCountSilent
 	idxOptCountFilter
 	idxOptCountDelimiter
+	idxOptCountThreads
 	idxOptCountTotal
 )
 
@@ -73,6 +75,7 @@ const (
 	idxOptCopySilent
 	idxOptCopyFilter
 	idxOptCopyDelimiter
+	idxOptCopyThreads
 	idxOptCopyTotal
 )
 
@@ -85,6 +88,7 @@ const (
 	idxOptMoveSilent
 	idxOptMoveFilter
 	idxOptMoveDelimiter
+	idxOptMoveThreads
 	idxOptMoveTotal
 )
 
@@ -95,6 +99,7 @@ const (
 	idxOptRemoveSilent
 	idxOptRemoveFilter
 	idxOptRemoveDelimiter
+	idxOptRemoveThreads
 	idxOptRemoveTotal
 )
 

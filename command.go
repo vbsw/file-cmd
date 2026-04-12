@@ -47,7 +47,7 @@ func getCommand(osArgs []string) *tCommand {
 		infoArgsList, cmdArgsList := argsList[:idxInfoTotal], argsList[idxInfoTotal:len(argsList)]
 		cmdLine := cl.New(osArgs, cl.NewDelimiter("", " ", "="))
 		command.threads = 1
-		readCmdArgs(cmdArgsList, cmdLine) // args having values
+		readCmdArgs(cmdArgsList, cmdLine)   // args having values
 		readInfoArgs(infoArgsList, cmdLine) // args without values
 		validateInfo(command, infoArgsList, cmdArgsList, cmdLine)
 		validateCmd(command, infoArgsList, cmdArgsList, cmdLine)
@@ -268,6 +268,7 @@ func validateList(command *tCommand, cmdArgs *cl.Arguments, cmdLine *cl.CommandL
 			command.recursive = optArgsList[idxOptListRecursive].Available()
 			command.silent = optArgsList[idxOptListSilent].Available()
 			command.contentFilter = getFilter(optArgsList[idxOptListFilter], optArgsList[idxOptListDelimiter], unmatchedArgs, cmdLine)
+			command.threads, command.err = getThreads(optArgsList[idxOptListThreads], command.err)
 			command.id = cmdList
 		} else {
 			command.err = errMultipleUsage(argMultiple.Keys)
@@ -292,6 +293,7 @@ func validateCount(command *tCommand, cmdArgs *cl.Arguments, cmdLine *cl.Command
 			command.recursive = optArgsList[idxOptCountRecursive].Available()
 			command.silent = optArgsList[idxOptCountSilent].Available()
 			command.contentFilter = getFilter(optArgsList[idxOptCountFilter], optArgsList[idxOptCountDelimiter], unmatchedArgs, cmdLine)
+			command.threads, command.err = getThreads(optArgsList[idxOptCountThreads], command.err)
 			command.id = cmdCount
 		} else {
 			command.err = errMultipleUsage(argMultiple.Keys)
@@ -318,6 +320,7 @@ func validateCopy(command *tCommand, cmdArgs *cl.Arguments, cmdLine *cl.CommandL
 			command.recursive = optArgsList[idxOptCopyRecursive].Available()
 			command.silent = optArgsList[idxOptCopySilent].Available()
 			command.contentFilter = getFilter(optArgsList[idxOptCopyFilter], optArgsList[idxOptCopyDelimiter], unmatchedArgs, cmdLine)
+			command.threads, command.err = getThreads(optArgsList[idxOptCopyThreads], command.err)
 			command.id = cmdCopy
 		} else {
 			command.err = errMultipleUsage(argMultiple.Keys)
@@ -344,6 +347,7 @@ func validateMove(command *tCommand, cmdArgs *cl.Arguments, cmdLine *cl.CommandL
 			command.recursive = optArgsList[idxOptMoveRecursive].Available()
 			command.silent = optArgsList[idxOptMoveSilent].Available()
 			command.contentFilter = getFilter(optArgsList[idxOptMoveFilter], optArgsList[idxOptMoveDelimiter], unmatchedArgs, cmdLine)
+			command.threads, command.err = getThreads(optArgsList[idxOptMoveThreads], command.err)
 			command.id = cmdMove
 		} else {
 			command.err = errMultipleUsage(argMultiple.Keys)
@@ -368,6 +372,7 @@ func validateRemove(command *tCommand, cmdArgs *cl.Arguments, cmdLine *cl.Comman
 			command.recursive = optArgsList[idxOptRemoveRecursive].Available()
 			command.silent = optArgsList[idxOptRemoveSilent].Available()
 			command.contentFilter = getFilter(optArgsList[idxOptRemoveFilter], optArgsList[idxOptRemoveDelimiter], unmatchedArgs, cmdLine)
+			command.threads, command.err = getThreads(optArgsList[idxOptRemoveThreads], command.err)
 			command.id = cmdRemove
 		} else {
 			command.err = errMultipleUsage(argMultiple.Keys)
@@ -494,6 +499,7 @@ func getOptListArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
 	argsList[idxOptListInput] = cmdLine.MatchDelimited("-i", "--input")
 	argsList[idxOptListFilter] = cmdLine.MatchDelimited("-f")
 	argsList[idxOptListDelimiter] = cmdLine.MatchDelimited("-d")
+	argsList[idxOptListThreads] = cmdLine.MatchDelimited("-t")
 	return argsList
 }
 
@@ -505,6 +511,7 @@ func getOptCountArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
 	argsList[idxOptCountInput] = cmdLine.MatchDelimited("-i", "--input")
 	argsList[idxOptCountFilter] = cmdLine.MatchDelimited("-f")
 	argsList[idxOptCountDelimiter] = cmdLine.MatchDelimited("-d")
+	argsList[idxOptCountThreads] = cmdLine.MatchDelimited("-t")
 	return argsList
 }
 
@@ -518,6 +525,7 @@ func getOptCopyArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
 	argsList[idxOptCopyOutput] = cmdLine.MatchDelimited("-o", "--output")
 	argsList[idxOptCopyFilter] = cmdLine.MatchDelimited("-f")
 	argsList[idxOptCopyDelimiter] = cmdLine.MatchDelimited("-d")
+	argsList[idxOptCopyThreads] = cmdLine.MatchDelimited("-t")
 	return argsList
 }
 
@@ -531,6 +539,7 @@ func getOptMoveArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
 	argsList[idxOptMoveOutput] = cmdLine.MatchDelimited("-o", "--output")
 	argsList[idxOptMoveFilter] = cmdLine.MatchDelimited("-f")
 	argsList[idxOptMoveDelimiter] = cmdLine.MatchDelimited("-d")
+	argsList[idxOptMoveThreads] = cmdLine.MatchDelimited("-t")
 	return argsList
 }
 
@@ -542,6 +551,7 @@ func getOptRemoveArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
 	argsList[idxOptRemoveInput] = cmdLine.MatchDelimited("-i", "--input")
 	argsList[idxOptRemoveFilter] = cmdLine.MatchDelimited("-f")
 	argsList[idxOptRemoveDelimiter] = cmdLine.MatchDelimited("-d")
+	argsList[idxOptRemoveThreads] = cmdLine.MatchDelimited("-t")
 	return argsList
 }
 
@@ -680,7 +690,7 @@ func validateInputDirFile(command *tCommand, inputArgs, unmatchedArgs *cl.Argume
 	if command.err == nil {
 		if command.inputPath > "" {
 			command.inputDir = command.inputPath
-			validateDir("input", command.inputDir, command)
+			validateDir(command, command.inputDir, "input")
 			if command.err != nil {
 				fileName := filepath.Base(command.inputPath)
 				command.err = nil
@@ -688,7 +698,7 @@ func validateInputDirFile(command *tCommand, inputArgs, unmatchedArgs *cl.Argume
 				if fileName > "" && fileName != "*" {
 					command.fileNameFilter = fileName
 				}
-				validateDir("input", command.inputDir, command)
+				validateDir(command, command.inputDir, "input")
 			}
 		} else {
 			command.err = errPathEmpty("input")
@@ -709,14 +719,14 @@ func validateOutputDir(command *tCommand, outputArgs, unmatchedArgs *cl.Argument
 	if command.err == nil {
 		if command.outputPath > "" {
 			command.outputDir = command.outputPath
-			//validateDir("output", command.outputDir, command)
+			//validateDir(command, command.outputDir, "output")
 		} else {
 			command.err = errPathEmpty("output")
 		}
 	}
 }
 
-func validateDir(io, dir string, command *tCommand) {
+func validateDir(command *tCommand, dir, io string) {
 	if command.err == nil {
 		if dir > "" {
 			info, err := os.Stat(dir)
@@ -765,7 +775,36 @@ func getFilter(filterArgs, delimiterArgs, unmatchedArgs *cl.Arguments, cmdLine *
 			}
 		}
 	}
-	return result
+	return removeEmpty(result)
+}
+
+func removeEmpty(result []string) []string {
+	var j int
+	for i := 0; i < len(result); i++ {
+		if len(result[i]) > 0 {
+			result[j] = result[i]
+			j++
+		}
+	}
+	return result[:j]
+}
+
+func getThreads(args *cl.Arguments, err error) (int, error) {
+	if err == nil && args.Available() {
+		value := args.Values[0]
+		if value > "" {
+			threads, errConv := strconv.Atoi(value)
+			if threads < 1 {
+				threads = 1
+			}
+			if errConv == nil {
+				return threads, nil
+			}
+			return threads, errArgNotInteger(args.Keys[0], args.Values[0])
+		}
+		return 1, errMissingArgValue(args.Keys[0])
+	}
+	return 1, err
 }
 
 func anyAvailable(argsList []*cl.Arguments) bool {

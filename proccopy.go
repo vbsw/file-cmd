@@ -9,7 +9,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/vbsw/go-lib/match"
+	"io"
 	"os"
 	"path/filepath"
 )
@@ -18,47 +18,55 @@ func processCopy(command *tCommand) {
 	var proc tProcess
 	proc.initInputOutputDir(command)
 	proc.fetchInputSubPaths(command)
-}
-
-func iterateCopyRecursiveGo(command *tCommand, inputDir, outputDir string, threads int) {
-}
-
-func iterateCopyRecursive(command *tCommand, inputDir, outputDir string) {
-	//buffer := make([]byte, 8*1024*1024)
-	err := filepath.Walk(inputDir, func(path string, info os.FileInfo, err error) error {
-		if err == nil {
-			if info != nil && !info.IsDir() {
-				if match.WildcardMatch(command.fileNameFilter, info.Name()) {
-					fmt.Println(info.Name())
-				}
-				return nil
+	if command.err == nil && len(proc.subPaths) > 0 {
+		maxFilterLength := maxStringLength(command.contentFilter)
+		checkedDirs := make(map[string]bool, 64)
+		proc.initOthers(command.threads)
+		for i := 0; i < proc.threads; i++ {
+			from, to := proc.step(i)
+			if command.or {
+				go proc.checkFileContentAny(command.inputDir, from, to, command.contentFilter, maxFilterLength)
+			} else {
+				go proc.checkFileContentAll(command.inputDir, from, to, command.contentFilter, maxFilterLength)
 			}
-		} else if !command.silent {
-			fmt.Println("Warning:", err.Error())
 		}
-		return nil
-	})
-	command.err = err
-}
-
-func iterateCopyFlatGo(command *tCommand, inputDir, outputDir string, threads int) {
-}
-
-func iterateCopyFlat(command *tCommand, inputDir, outputDir string) {
-	inputDirLength := len(inputDir) + 1
-	//buffer := make([]byte, 8*1024*1024)
-	err := filepath.Walk(inputDir, func(path string, info os.FileInfo, err error) error {
-		if err == nil {
-			if info != nil && !info.IsDir() && inputDirLength == len(path)-len(info.Name()) {
-				if match.WildcardMatch(command.fileNameFilter, info.Name()) {
-					fmt.Println(info.Name())
+		for i := 0; i < len(proc.subPaths); i++ {
+			proc.fetchResultsFromChannel(i)
+			if proc.resultsIdx[i] == 1 {
+				outputDirAvail := ensureOutputDir(command, proc.absOutputDir, proc.subPaths[i], &checkedDirs)
+				if outputDirAvail {
+					copyFile(command, proc.subPaths[i])
 				}
-				return nil
+			} else if proc.resultsErr[i] != nil && !command.silent {
+				fmt.Println("Warning:", proc.resultsErr[i].Error())
 			}
-		} else if !command.silent {
-			fmt.Println("Warning:", err.Error())
 		}
-		return nil
-	})
-	command.err = err
+	}
+}
+
+func copyFile(command *tCommand, subPath string) {
+	inputPath := filepath.Join(command.inputDir, subPath)
+	inputFile, inputErr := os.Open(inputPath)
+	if inputErr == nil {
+		outputPath := filepath.Join(command.outputDir, subPath)
+		outputFile, outputErr := os.OpenFile(outputPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+		if outputErr == nil {
+			_, copyErr := io.Copy(outputFile, inputFile)
+			if copyErr == nil {
+				outputFile.Sync()
+			} else if !command.silent {
+				fmt.Println("Warning:", copyErr.Error())
+			}
+			outputFile.Close()
+		} else if !command.silent {
+			fmt.Println("Warning:", outputErr.Error())
+		}
+		inputFile.Close()
+	} else if !command.silent {
+		fmt.Println("Warning:", inputErr.Error())
+	}
+}
+
+func fileHasContent() (bool, error) {
+	return true, nil
 }

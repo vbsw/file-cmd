@@ -94,6 +94,7 @@ func printInfoList(cmdStr string) {
 	message += "    -s, --silent      don't output errors to screen when reading files\n"
 	message += "    -d=D              set delimiter D; default is comma, else space\n"
 	message += "                      empty D is no delimiter\n"
+	message += "    -t=N              use N threads\n"
 	message += "FILTER\n"
 	message += "    ( -f=W | W )      filter files by strings W; W is divided by delimiter"
 	fmt.Println(message)
@@ -109,6 +110,7 @@ func printInfoCount(cmdStr string) {
 	message += "    --or              filter is OR (not AND)\n"
 	message += "    -r, --recursive   recursive file iteration\n"
 	message += "    -s, --silent      don't output errors to screen when reading files\n"
+	message += "    -t=N              use N threads\n"
 	message += "FILTER\n"
 	message += "    ( -f=W | W )      filter files by strings W; space or comma are separators"
 	fmt.Println(message)
@@ -127,6 +129,7 @@ func printInfoCopy(cmdStr string) {
 	message += "    -w                overwrite output files\n"
 	message += "    -r, --recursive   recursive file iteration\n"
 	message += "    -s, --silent      don't output errors to screen when reading files\n"
+	message += "    -t=N              use N threads\n"
 	message += "FILTER\n"
 	message += "    ( -f=W | W )      filter files by strings W; space or comma are separators"
 	fmt.Println(message)
@@ -145,6 +148,7 @@ func printInfoMove(cmdStr string) {
 	message += "    -w                overwrite output files\n"
 	message += "    -r, --recursive   recursive file iteration\n"
 	message += "    -s, --silent      don't output errors to screen when reading files\n"
+	message += "    -t=N              use N threads\n"
 	message += "FILTER\n"
 	message += "    ( -f=W | W )      filter files by strings W; space or comma are separators"
 	fmt.Println(message)
