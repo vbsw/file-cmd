@@ -26,10 +26,11 @@ type tCommand struct {
 	inputDir       string
 	outputDir      string
 	terminator     string
-	fileNameFilter []string
+	fileNameFilter string
 	contentFilter  []string
 	parts, lines   int
 	id             int
+	threads        int
 	overwrite      bool
 	or             bool
 	recursive      bool
@@ -42,11 +43,12 @@ type tCommand struct {
 func getCommand(osArgs []string) *tCommand {
 	command := new(tCommand)
 	if len(osArgs) > 0 {
+		var argsList [idxInfoTotal + idxCmdTotal]*cl.Arguments
+		infoArgsList, cmdArgsList := argsList[:idxInfoTotal], argsList[idxInfoTotal:len(argsList)]
 		cmdLine := cl.New(osArgs, cl.NewDelimiter("", " ", "="))
-		// first args with values
-		cmdArgsList := getCmdArgs(cmdLine)
-		// then just args
-		infoArgsList := getInfoArgs(cmdLine)
+		command.threads = 1
+		readCmdArgs(cmdArgsList, cmdLine) // args having values
+		readInfoArgs(infoArgsList, cmdLine) // args without values
 		validateInfo(command, infoArgsList, cmdArgsList, cmdLine)
 		validateCmd(command, infoArgsList, cmdArgsList, cmdLine)
 		if command.err == nil && (command.id <= cmdNone || command.id >= cmdTotal) {
@@ -58,26 +60,22 @@ func getCommand(osArgs []string) *tCommand {
 	return command
 }
 
-func getInfoArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
-	argsList := make([]*cl.Arguments, idxInfoTotal, idxInfoTotal)
-	argsList[idxInfoHelp] = cmdLine.Search("-h", "--help", "-help", "help")
-	argsList[idxInfoVersion] = cmdLine.Search("-v", "--version", "-version", "version")
-	argsList[idxInfoExample] = cmdLine.Search("-e", "--example", "-example", "example")
-	argsList[idxInfoCopyright] = cmdLine.Search("-c", "--copyright", "-copyright", "copyright")
-	return argsList
+func readInfoArgs(argsList []*cl.Arguments, cmdLine *cl.CommandLine) {
+	argsList[idxInfoHelp] = cmdLine.Match("-h", "--help", "-help", "help")
+	argsList[idxInfoVersion] = cmdLine.Match("-v", "--version", "-version", "version")
+	argsList[idxInfoExample] = cmdLine.Match("-e", "--example", "-example", "example")
+	argsList[idxInfoCopyright] = cmdLine.Match("-c", "--copyright", "-copyright", "copyright")
 }
 
-func getCmdArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
-	argsList := make([]*cl.Arguments, idxCmdTotal, idxCmdTotal)
-	argsList[idxCmdSplit] = cmdLine.Search("split")
-	argsList[idxCmdConcat] = cmdLine.Search("concat")
-	argsList[idxCmdList] = cmdLine.Search("ls", "list", "print")
-	argsList[idxCmdCount] = cmdLine.Search("count")
-	argsList[idxCmdCopy] = cmdLine.Search("cp", "copy")
-	argsList[idxCmdMove] = cmdLine.Search("mv", "move")
-	argsList[idxCmdRemove] = cmdLine.Search("rm", "remove")
-	argsList[idxCmdText] = cmdLine.Search("text")
-	return argsList
+func readCmdArgs(argsList []*cl.Arguments, cmdLine *cl.CommandLine) {
+	argsList[idxCmdSplit] = cmdLine.Match("split")
+	argsList[idxCmdConcat] = cmdLine.Match("concat")
+	argsList[idxCmdList] = cmdLine.Match("ls", "list", "print")
+	argsList[idxCmdCount] = cmdLine.Match("count")
+	argsList[idxCmdCopy] = cmdLine.Match("cp", "copy")
+	argsList[idxCmdMove] = cmdLine.Match("mv", "move")
+	argsList[idxCmdRemove] = cmdLine.Match("rm", "remove")
+	argsList[idxCmdText] = cmdLine.Match("text")
 }
 
 func validateInfo(command *tCommand, infoArgsList, cmdArgsList []*cl.Arguments, cmdLine *cl.CommandLine) {
@@ -471,90 +469,90 @@ func getCmdExampleId(cmdArgsList []*cl.Arguments) int {
 
 func getOptSplitArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
 	argsList := make([]*cl.Arguments, idxOptSplitTotal, idxOptSplitTotal)
-	argsList[idxOptSplitParts] = cmdLine.SearchByDelimiter("-p")
-	argsList[idxOptSplitBytes] = cmdLine.SearchByDelimiter("-b")
-	argsList[idxOptSplitLines] = cmdLine.SearchByDelimiter("-l")
-	argsList[idxOptSplitOverwrite] = cmdLine.Search("-w")
-	argsList[idxOptSplitInput] = cmdLine.SearchByDelimiter("-i", "--input")
-	argsList[idxOptSplitOutput] = cmdLine.SearchByDelimiter("-o", "--output")
+	argsList[idxOptSplitParts] = cmdLine.MatchDelimited("-p")
+	argsList[idxOptSplitBytes] = cmdLine.MatchDelimited("-b")
+	argsList[idxOptSplitLines] = cmdLine.MatchDelimited("-l")
+	argsList[idxOptSplitOverwrite] = cmdLine.Match("-w")
+	argsList[idxOptSplitInput] = cmdLine.MatchDelimited("-i", "--input")
+	argsList[idxOptSplitOutput] = cmdLine.MatchDelimited("-o", "--output")
 	return argsList
 }
 
 func getOptConcatArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
 	argsList := make([]*cl.Arguments, idxOptConcatTotal, idxOptConcatTotal)
-	argsList[idxOptConcatOverwrite] = cmdLine.Search("-w")
-	argsList[idxOptConcatInput] = cmdLine.SearchByDelimiter("-i", "--input")
-	argsList[idxOptConcatOutput] = cmdLine.SearchByDelimiter("-o", "--output")
+	argsList[idxOptConcatOverwrite] = cmdLine.Match("-w")
+	argsList[idxOptConcatInput] = cmdLine.MatchDelimited("-i", "--input")
+	argsList[idxOptConcatOutput] = cmdLine.MatchDelimited("-o", "--output")
 	return argsList
 }
 
 func getOptListArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
 	argsList := make([]*cl.Arguments, idxOptListTotal, idxOptListTotal)
-	argsList[idxOptListOr] = cmdLine.Search("--or")
-	argsList[idxOptListRecursive] = cmdLine.Search("-r", "--recursive")
-	argsList[idxOptListSilent] = cmdLine.Search("-s", "--silent")
-	argsList[idxOptListInput] = cmdLine.SearchByDelimiter("-i", "--input")
-	argsList[idxOptListFilter] = cmdLine.SearchByDelimiter("-f")
-	argsList[idxOptListDelimiter] = cmdLine.SearchByDelimiter("-d")
+	argsList[idxOptListOr] = cmdLine.Match("--or")
+	argsList[idxOptListRecursive] = cmdLine.Match("-r", "--recursive")
+	argsList[idxOptListSilent] = cmdLine.Match("-s", "--silent")
+	argsList[idxOptListInput] = cmdLine.MatchDelimited("-i", "--input")
+	argsList[idxOptListFilter] = cmdLine.MatchDelimited("-f")
+	argsList[idxOptListDelimiter] = cmdLine.MatchDelimited("-d")
 	return argsList
 }
 
 func getOptCountArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
 	argsList := make([]*cl.Arguments, idxOptCountTotal, idxOptCountTotal)
-	argsList[idxOptCountOr] = cmdLine.Search("--or")
-	argsList[idxOptCountRecursive] = cmdLine.Search("-r", "--recursive")
-	argsList[idxOptCountSilent] = cmdLine.Search("-s", "--silent")
-	argsList[idxOptCountInput] = cmdLine.SearchByDelimiter("-i", "--input")
-	argsList[idxOptCountFilter] = cmdLine.SearchByDelimiter("-f")
-	argsList[idxOptCountDelimiter] = cmdLine.SearchByDelimiter("-d")
+	argsList[idxOptCountOr] = cmdLine.Match("--or")
+	argsList[idxOptCountRecursive] = cmdLine.Match("-r", "--recursive")
+	argsList[idxOptCountSilent] = cmdLine.Match("-s", "--silent")
+	argsList[idxOptCountInput] = cmdLine.MatchDelimited("-i", "--input")
+	argsList[idxOptCountFilter] = cmdLine.MatchDelimited("-f")
+	argsList[idxOptCountDelimiter] = cmdLine.MatchDelimited("-d")
 	return argsList
 }
 
 func getOptCopyArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
 	argsList := make([]*cl.Arguments, idxOptCopyTotal, idxOptCopyTotal)
-	argsList[idxOptCopyOr] = cmdLine.Search("--or")
-	argsList[idxOptCopyOverwrite] = cmdLine.Search("-w")
-	argsList[idxOptCopyRecursive] = cmdLine.Search("-r", "--recursive")
-	argsList[idxOptCopySilent] = cmdLine.Search("-s", "--silent")
-	argsList[idxOptCopyInput] = cmdLine.SearchByDelimiter("-i", "--input")
-	argsList[idxOptCopyOutput] = cmdLine.SearchByDelimiter("-o", "--output")
-	argsList[idxOptCopyFilter] = cmdLine.SearchByDelimiter("-f")
-	argsList[idxOptCopyDelimiter] = cmdLine.SearchByDelimiter("-d")
+	argsList[idxOptCopyOr] = cmdLine.Match("--or")
+	argsList[idxOptCopyOverwrite] = cmdLine.Match("-w")
+	argsList[idxOptCopyRecursive] = cmdLine.Match("-r", "--recursive")
+	argsList[idxOptCopySilent] = cmdLine.Match("-s", "--silent")
+	argsList[idxOptCopyInput] = cmdLine.MatchDelimited("-i", "--input")
+	argsList[idxOptCopyOutput] = cmdLine.MatchDelimited("-o", "--output")
+	argsList[idxOptCopyFilter] = cmdLine.MatchDelimited("-f")
+	argsList[idxOptCopyDelimiter] = cmdLine.MatchDelimited("-d")
 	return argsList
 }
 
 func getOptMoveArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
 	argsList := make([]*cl.Arguments, idxOptMoveTotal, idxOptMoveTotal)
-	argsList[idxOptMoveOr] = cmdLine.Search("--or")
-	argsList[idxOptMoveOverwrite] = cmdLine.Search("-w")
-	argsList[idxOptMoveRecursive] = cmdLine.Search("-r", "--recursive")
-	argsList[idxOptMoveSilent] = cmdLine.Search("-s", "--silent")
-	argsList[idxOptMoveInput] = cmdLine.SearchByDelimiter("-i", "--input")
-	argsList[idxOptMoveOutput] = cmdLine.SearchByDelimiter("-o", "--output")
-	argsList[idxOptMoveFilter] = cmdLine.SearchByDelimiter("-f")
-	argsList[idxOptMoveDelimiter] = cmdLine.SearchByDelimiter("-d")
+	argsList[idxOptMoveOr] = cmdLine.Match("--or")
+	argsList[idxOptMoveOverwrite] = cmdLine.Match("-w")
+	argsList[idxOptMoveRecursive] = cmdLine.Match("-r", "--recursive")
+	argsList[idxOptMoveSilent] = cmdLine.Match("-s", "--silent")
+	argsList[idxOptMoveInput] = cmdLine.MatchDelimited("-i", "--input")
+	argsList[idxOptMoveOutput] = cmdLine.MatchDelimited("-o", "--output")
+	argsList[idxOptMoveFilter] = cmdLine.MatchDelimited("-f")
+	argsList[idxOptMoveDelimiter] = cmdLine.MatchDelimited("-d")
 	return argsList
 }
 
 func getOptRemoveArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
 	argsList := make([]*cl.Arguments, idxOptRemoveTotal, idxOptRemoveTotal)
-	argsList[idxOptRemoveOr] = cmdLine.Search("--or")
-	argsList[idxOptRemoveRecursive] = cmdLine.Search("-r", "--recursive")
-	argsList[idxOptRemoveSilent] = cmdLine.Search("-s", "--silent")
-	argsList[idxOptRemoveInput] = cmdLine.SearchByDelimiter("-i", "--input")
-	argsList[idxOptRemoveFilter] = cmdLine.SearchByDelimiter("-f")
-	argsList[idxOptRemoveDelimiter] = cmdLine.SearchByDelimiter("-d")
+	argsList[idxOptRemoveOr] = cmdLine.Match("--or")
+	argsList[idxOptRemoveRecursive] = cmdLine.Match("-r", "--recursive")
+	argsList[idxOptRemoveSilent] = cmdLine.Match("-s", "--silent")
+	argsList[idxOptRemoveInput] = cmdLine.MatchDelimited("-i", "--input")
+	argsList[idxOptRemoveFilter] = cmdLine.MatchDelimited("-f")
+	argsList[idxOptRemoveDelimiter] = cmdLine.MatchDelimited("-d")
 	return argsList
 }
 
 func getOptTextArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
 	argsList := make([]*cl.Arguments, idxOptTextTotal, idxOptTextTotal)
-	argsList[idxOptTextOverwrite] = cmdLine.Search("-w")
-	argsList[idxOptTextOutput] = cmdLine.SearchByDelimiter("-o", "--output")
-	argsList[idxOptTextSize] = cmdLine.SearchByDelimiter("-s")
-	argsList[idxOptTextTerminator] = cmdLine.SearchByDelimiter("-e")
-	argsList[idxOptTextDelimiter] = cmdLine.SearchByDelimiter("-d")
-	argsList[idxOptTextFormat] = cmdLine.SearchByDelimiter("-f")
+	argsList[idxOptTextOverwrite] = cmdLine.Match("-w")
+	argsList[idxOptTextOutput] = cmdLine.MatchDelimited("-o", "--output")
+	argsList[idxOptTextSize] = cmdLine.MatchDelimited("-s")
+	argsList[idxOptTextTerminator] = cmdLine.MatchDelimited("-e")
+	argsList[idxOptTextDelimiter] = cmdLine.MatchDelimited("-d")
+	argsList[idxOptTextFormat] = cmdLine.MatchDelimited("-f")
 	return argsList
 }
 
@@ -688,7 +686,7 @@ func validateInputDirFile(command *tCommand, inputArgs, unmatchedArgs *cl.Argume
 				command.err = nil
 				command.inputDir = filepath.Dir(command.inputPath)
 				if fileName > "" && fileName != "*" {
-					command.fileNameFilter = strings.Split(fileName, "*")
+					command.fileNameFilter = fileName
 				}
 				validateDir("input", command.inputDir, command)
 			}
@@ -711,7 +709,7 @@ func validateOutputDir(command *tCommand, outputArgs, unmatchedArgs *cl.Argument
 	if command.err == nil {
 		if command.outputPath > "" {
 			command.outputDir = command.outputPath
-			validateDir("output", command.outputDir, command)
+			//validateDir("output", command.outputDir, command)
 		} else {
 			command.err = errPathEmpty("output")
 		}
