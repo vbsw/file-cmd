@@ -17,7 +17,6 @@ import (
 )
 
 type tCommand struct {
-	bytes          int64
 	err            error
 	inputPath      string
 	outputPath     string
@@ -28,6 +27,7 @@ type tCommand struct {
 	terminator     string
 	fileNameFilter string
 	contentFilter  []string
+	bytes          int64
 	parts, lines   int
 	id             int
 	threads        int
@@ -314,7 +314,7 @@ func validateCopy(command *tCommand, cmdArgs *cl.Arguments, cmdLine *cl.CommandL
 			}
 			unmatchedArgs := cmdLine.Unmatched()
 			validateInputDirFile(command, optArgsList[idxOptCopyInput], unmatchedArgs, cmdLine)
-			validateOutputDir(command, optArgsList[idxOptCopyInput], unmatchedArgs, cmdLine)
+			validateOutputDir(command, optArgsList[idxOptCopyOutput], unmatchedArgs, cmdLine)
 			command.or = optArgsList[idxOptCopyOr].Available()
 			command.overwrite = optArgsList[idxOptCopyOverwrite].Available()
 			command.recursive = optArgsList[idxOptCopyRecursive].Available()
@@ -341,7 +341,7 @@ func validateMove(command *tCommand, cmdArgs *cl.Arguments, cmdLine *cl.CommandL
 			}
 			unmatchedArgs := cmdLine.Unmatched()
 			validateInputDirFile(command, optArgsList[idxOptMoveInput], unmatchedArgs, cmdLine)
-			validateOutputDir(command, optArgsList[idxOptMoveInput], unmatchedArgs, cmdLine)
+			validateOutputDir(command, optArgsList[idxOptMoveOutput], unmatchedArgs, cmdLine)
 			command.or = optArgsList[idxOptMoveOr].Available()
 			command.overwrite = optArgsList[idxOptMoveOverwrite].Available()
 			command.recursive = optArgsList[idxOptMoveRecursive].Available()

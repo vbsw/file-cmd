@@ -9,22 +9,28 @@ package main
 
 import (
 	"fmt"
-	"github.com/vbsw/go-lib/match"
+	. "github.com/vbsw/go-lib/match"
 	"os"
 	"path/filepath"
 )
+
+const procInitialBufferSize = 8 * 1024 * 1024
 
 type tProcess struct {
 	channel      chan tResult
 	subPaths     []string
 	resultsIdx   []int8
 	resultsErr   []error
+	filter       []string
 	absInputDir  string
 	absOutputDir string
 	threads      int
 	offset       int
 	delta        int
 	rest         int
+	filterMin    int
+	filterMax    int
+	bufferSize   int
 }
 
 type tResult struct {
@@ -65,7 +71,7 @@ func (proc *tProcess) fetchInputSubPathsRecursive(command *tCommand) {
 		if err == nil {
 			if info != nil && !info.IsDir() {
 				fileName := info.Name()
-				if match.WildcardMatch(command.fileNameFilter, fileName) {
+				if WildcardMatch(command.fileNameFilter, fileName) {
 					if inputDirLength == len(path)-len(fileName) {
 						proc.subPaths = append(proc.subPaths, fileName)
 					} else {
@@ -88,7 +94,7 @@ func (proc *tProcess) fetchInputSubPathsFlat(command *tCommand) {
 		if err == nil {
 			fileName := info.Name()
 			if info != nil && !info.IsDir() && inputDirLength == len(path)-len(fileName) {
-				if match.WildcardMatch(command.fileNameFilter, fileName) {
+				if WildcardMatch(command.fileNameFilter, fileName) {
 					proc.subPaths = append(proc.subPaths, fileName)
 				}
 				return nil
@@ -100,7 +106,7 @@ func (proc *tProcess) fetchInputSubPathsFlat(command *tCommand) {
 	})
 }
 
-func (proc *tProcess) initOthers(threads int) {
+func (proc *tProcess) initOthers(threads int, filter []string) {
 	if len(proc.subPaths) < threads {
 		proc.threads = len(proc.subPaths)
 	} else {
@@ -108,9 +114,16 @@ func (proc *tProcess) initOthers(threads int) {
 	}
 	proc.resultsIdx = make([]int8, len(proc.subPaths))
 	proc.resultsErr = make([]error, len(proc.subPaths))
-	proc.channel = make(chan tResult, max(min(len(proc.subPaths), 128), proc.threads*16))
+	proc.channel = make(chan tResult, min(len(proc.subPaths), max(128, proc.threads*16)))
 	proc.delta = len(proc.subPaths) / proc.threads
 	proc.rest = len(proc.subPaths) % proc.threads
+	proc.filter = filter
+	proc.filterMin, proc.filterMax = getBounds(filter)
+	if proc.filterMax <= procInitialBufferSize {
+		proc.bufferSize = procInitialBufferSize
+	} else {
+		proc.bufferSize = proc.filterMax + procInitialBufferSize
+	}
 }
 
 func (proc *tProcess) step(i int) (int, int) {
@@ -136,75 +149,65 @@ func (proc *tProcess) fetchResultsFromChannel(i int) {
 	}
 }
 
-func (proc *tProcess) checkFileContentAll(inputDir string, from, to int, filter []string, maxFilterLength int) {
-	//buffer := make([]byte, 8*1024*1024)
+func (proc *tProcess) checkFileContentAll(inputDir string, from, to int) {
+	var reader tFileReader
+	reader.buffer = make([]byte, proc.bufferSize)
 	for i := from; i < to && i < len(proc.subPaths); i++ {
-		/*
-			var hasContent bool
-			var err error
-			inputPath := filepath.Join(inputDir, subPaths[i])
-			outputPath := filepath.Join(outputDir, subPaths[i])
-			hasContent, err = fileHasContent(inputPath)
-			if err == nil {
-				if hasContent {
-					outputParentDir := filepath.Dir(outputPath)
-					if len(outputParentDir) != len(outputDir) {
-						err = ensureDir(outputPath)
-					}
-					if err == nil {
-						err = copyFile(inputPath, outputPath)
-						if err == nil {
-							channel <- tResult{nil, i}
-						} else {
-							channel <- tResult{err, i*-1-1}
-						}
+		var match bool
+		inputPath := filepath.Join(inputDir, proc.subPaths[i])
+		reader.openFile(inputPath)
+		if reader.err == nil {
+			if reader.fileSize >= int64(proc.filterMax) {
+				reader.readToBuffer(0)
+				checking := bool(reader.err == nil && reader.nRead >= proc.filterMax)
+				for checking {
+					match = Contains(reader.buffer[:reader.nRead], proc.filter, And)
+					if match || reader.totalRead <= reader.fileSize {
+						checking = false
 					} else {
-						channel <- tResult{err, i*-1-1}
+						reader.readToBuffer(proc.filterMax - 1)
+						checking = bool(reader.err == nil)
 					}
-				} else {
-					channel <- tResult{nil, i*-1-1}
 				}
-			} else {
-				channel <- tResult{err, i*-1-1}
 			}
-		*/
-		proc.channel <- tResult{nil, i}
+			reader.closeFile()
+		}
+		if match {
+			proc.channel <- tResult{reader.err, i}
+		} else {
+			proc.channel <- tResult{reader.err, i*-1 - 1}
+		}
 	}
 }
 
-func (proc *tProcess) checkFileContentAny(inputDir string, from, to int, filter []string, maxFilterLength int) {
-	//buffer := make([]byte, 8*1024*1024)
+func (proc *tProcess) checkFileContentAny(inputDir string, from, to int) {
+	var reader tFileReader
+	reader.buffer = make([]byte, proc.bufferSize)
 	for i := from; i < to && i < len(proc.subPaths); i++ {
-		/*
-			var hasContent bool
-			var err error
-			inputPath := filepath.Join(inputDir, subPaths[i])
-			outputPath := filepath.Join(outputDir, subPaths[i])
-			hasContent, err = fileHasContent(inputPath)
-			if err == nil {
-				if hasContent {
-					outputParentDir := filepath.Dir(outputPath)
-					if len(outputParentDir) != len(outputDir) {
-						err = ensureDir(outputPath)
-					}
-					if err == nil {
-						err = copyFile(inputPath, outputPath)
-						if err == nil {
-							channel <- tResult{nil, i}
-						} else {
-							channel <- tResult{err, i*-1-1}
-						}
+		var match bool
+		inputPath := filepath.Join(inputDir, proc.subPaths[i])
+		reader.openFile(inputPath)
+		if reader.err == nil {
+			if reader.fileSize >= int64(proc.filterMin) {
+				reader.readToBuffer(0)
+				checking := bool(reader.err == nil && reader.nRead >= proc.filterMin)
+				for checking {
+					match = Contains(reader.buffer[:reader.nRead], proc.filter, Or)
+					if match || reader.totalRead <= reader.fileSize {
+						checking = false
 					} else {
-						channel <- tResult{err, i*-1-1}
+						reader.readToBuffer(proc.filterMax - 1)
+						checking = bool(reader.err == nil)
 					}
-				} else {
-					channel <- tResult{nil, i*-1-1}
 				}
-			} else {
-				channel <- tResult{err, i*-1-1}
 			}
-		*/
-		proc.channel <- tResult{nil, i}
+			reader.closeFile()
+		}
+		if match {
+			proc.channel <- tResult{reader.err, i}
+		} else {
+			proc.channel <- tResult{reader.err, i*-1 - 1}
+		}
 	}
 }
 
@@ -231,12 +234,16 @@ func ensureOutputDir(command *tCommand, absOutputDir, subPath string, checkedDir
 	return outputDirAvail
 }
 
-func maxStringLength(strings []string) int {
-	var max int
+func getBounds(strings []string) (int, int) {
+	var min, max int
 	for _, str := range strings {
-		if max < len(str) {
-			max = len(str)
+		length := len(str)
+		if max < length {
+			max = length
+		}
+		if min > length {
+			min = length
 		}
 	}
-	return max
+	return min, max
 }

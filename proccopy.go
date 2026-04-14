@@ -19,15 +19,17 @@ func processCopy(command *tCommand) {
 	proc.initInputOutputDir(command)
 	proc.fetchInputSubPaths(command)
 	if command.err == nil && len(proc.subPaths) > 0 {
-		maxFilterLength := maxStringLength(command.contentFilter)
 		checkedDirs := make(map[string]bool, 64)
-		proc.initOthers(command.threads)
-		for i := 0; i < proc.threads; i++ {
-			from, to := proc.step(i)
-			if command.or {
-				go proc.checkFileContentAny(command.inputDir, from, to, command.contentFilter, maxFilterLength)
-			} else {
-				go proc.checkFileContentAll(command.inputDir, from, to, command.contentFilter, maxFilterLength)
+		proc.initOthers(command.threads, command.contentFilter)
+		if command.or {
+			for i := 0; i < proc.threads; i++ {
+				from, to := proc.step(i)
+				go proc.checkFileContentAny(command.inputDir, from, to)
+			}
+		} else {
+			for i := 0; i < proc.threads; i++ {
+				from, to := proc.step(i)
+				go proc.checkFileContentAll(command.inputDir, from, to)
 			}
 		}
 		for i := 0; i < len(proc.subPaths); i++ {
