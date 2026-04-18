@@ -9,7 +9,8 @@ package main
 
 import (
 	"fmt"
-	. "github.com/vbsw/go-lib/match"
+	"github.com/vbsw/go-lib/fs"
+	"github.com/vbsw/go-lib/match"
 	"os"
 	"path/filepath"
 )
@@ -19,6 +20,7 @@ const procInitialBufferSize = 8 * 1024 * 1024
 type tProcess struct {
 	channel      chan tResult
 	subPaths     []string
+	subDirs      []string
 	resultsIdx   []int8
 	resultsErr   []error
 	filter       []string
@@ -71,7 +73,7 @@ func (proc *tProcess) fetchInputSubPathsRecursive(command *tCommand) {
 		if err == nil {
 			if info != nil && !info.IsDir() {
 				fileName := info.Name()
-				if WildcardMatch(command.fileNameFilter, fileName) {
+				if match.WildcardMatch(fileName, command.fileNameFilter) {
 					if inputDirLength == len(path)-len(fileName) {
 						proc.subPaths = append(proc.subPaths, fileName)
 					} else {
@@ -94,7 +96,7 @@ func (proc *tProcess) fetchInputSubPathsFlat(command *tCommand) {
 		if err == nil {
 			fileName := info.Name()
 			if info != nil && !info.IsDir() && inputDirLength == len(path)-len(fileName) {
-				if WildcardMatch(command.fileNameFilter, fileName) {
+				if match.WildcardMatch(fileName, command.fileNameFilter) {
 					proc.subPaths = append(proc.subPaths, fileName)
 				}
 				return nil
@@ -149,72 +151,61 @@ func (proc *tProcess) fetchResultsFromChannel(i int) {
 	}
 }
 
-func (proc *tProcess) checkFileContentAll(inputDir string, from, to int) {
-	var reader tFileReader
-	reader.buffer = make([]byte, proc.bufferSize)
+func (proc *tProcess) checkContainsAll(inputDir string, from, to int) {
+	var reader fs.FileReader
+	reader.Buffer = make([]byte, proc.bufferSize)
 	for i := from; i < to && i < len(proc.subPaths); i++ {
-		var match bool
+		checking := true
 		inputPath := filepath.Join(inputDir, proc.subPaths[i])
-		reader.openFile(inputPath)
-		if reader.err == nil {
-			if reader.fileSize >= int64(proc.filterMax) {
-				reader.readToBuffer(0)
-				checking := bool(reader.err == nil && reader.nRead >= proc.filterMax)
-				for checking {
-					match = Contains(reader.buffer[:reader.nRead], proc.filter, And)
-					if match || reader.totalRead <= reader.fileSize {
-						checking = false
-					} else {
-						reader.readToBuffer(proc.filterMax - 1)
-						checking = bool(reader.err == nil)
-					}
+		if reader.Open(inputPath) {
+			checking = reader.Read(0)
+			checking = checking && reader.NRead >= proc.filterMax
+			for checking {
+				if match.Contains(reader.Buffer[:reader.NRead], proc.filter, match.And) {
+					break
+				} else {
+					checking = reader.Read(proc.filterMax - 1)
 				}
 			}
-			reader.closeFile()
+			reader.Close()
 		}
-		if match {
-			proc.channel <- tResult{reader.err, i}
+		if checking {
+			proc.channel <- tResult{reader.Err, i}
 		} else {
-			proc.channel <- tResult{reader.err, i*-1 - 1}
+			proc.channel <- tResult{reader.Err, i*-1 - 1}
 		}
 	}
 }
 
-func (proc *tProcess) checkFileContentAny(inputDir string, from, to int) {
-	var reader tFileReader
-	reader.buffer = make([]byte, proc.bufferSize)
+func (proc *tProcess) checkContainsAny(inputDir string, from, to int) {
+	var reader fs.FileReader
+	reader.Buffer = make([]byte, proc.bufferSize)
 	for i := from; i < to && i < len(proc.subPaths); i++ {
-		var match bool
+		checking := true
 		inputPath := filepath.Join(inputDir, proc.subPaths[i])
-		reader.openFile(inputPath)
-		if reader.err == nil {
-			if reader.fileSize >= int64(proc.filterMin) {
-				reader.readToBuffer(0)
-				checking := bool(reader.err == nil && reader.nRead >= proc.filterMin)
-				for checking {
-					match = Contains(reader.buffer[:reader.nRead], proc.filter, Or)
-					if match || reader.totalRead <= reader.fileSize {
-						checking = false
-					} else {
-						reader.readToBuffer(proc.filterMax - 1)
-						checking = bool(reader.err == nil)
-					}
+		if reader.Open(inputPath) {
+			checking = reader.Read(0) && reader.NRead >= proc.filterMin
+			for checking {
+				if match.Contains(reader.Buffer[:reader.NRead], proc.filter, match.Or) {
+					break
+				} else {
+					checking = reader.Read(proc.filterMax - 1)
 				}
 			}
-			reader.closeFile()
+			reader.Close()
 		}
-		if match {
-			proc.channel <- tResult{reader.err, i}
+		if checking {
+			proc.channel <- tResult{reader.Err, i}
 		} else {
-			proc.channel <- tResult{reader.err, i*-1 - 1}
+			proc.channel <- tResult{reader.Err, i*-1 - 1}
 		}
 	}
 }
 
-func ensureOutputDir(command *tCommand, absOutputDir, subPath string, checkedDirs *map[string]bool) bool {
+func ensureOutputDir(command *tCommand, absOutputDir, subPath string, checkedDirs *map[string]bool) (bool, bool) {
 	outputPath := filepath.Join(absOutputDir, subPath)
 	outputDir := filepath.Dir(outputPath)
-	outputDirAvail, inMap := true, true
+	outputDirAvail, inMap, isSubDirRemovable := true, true, false
 	if len(outputDir) != len(absOutputDir) {
 		outputDirAvail, inMap = (*checkedDirs)[outputDir]
 		if !inMap {
@@ -229,9 +220,10 @@ func ensureOutputDir(command *tCommand, absOutputDir, subPath string, checkedDir
 				command.err = nil
 			}
 			(*checkedDirs)[outputDir] = outputDirAvail
+			isSubDirRemovable = outputDirAvail
 		}
 	}
-	return outputDirAvail
+	return outputDirAvail, isSubDirRemovable
 }
 
 func getBounds(strings []string) (int, int) {

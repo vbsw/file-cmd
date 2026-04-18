@@ -24,18 +24,18 @@ func processCopy(command *tCommand) {
 		if command.or {
 			for i := 0; i < proc.threads; i++ {
 				from, to := proc.step(i)
-				go proc.checkFileContentAny(command.inputDir, from, to)
+				go proc.checkContainsAny(command.inputDir, from, to)
 			}
 		} else {
 			for i := 0; i < proc.threads; i++ {
 				from, to := proc.step(i)
-				go proc.checkFileContentAll(command.inputDir, from, to)
+				go proc.checkContainsAll(command.inputDir, from, to)
 			}
 		}
 		for i := 0; i < len(proc.subPaths); i++ {
 			proc.fetchResultsFromChannel(i)
 			if proc.resultsIdx[i] == 1 {
-				outputDirAvail := ensureOutputDir(command, proc.absOutputDir, proc.subPaths[i], &checkedDirs)
+				outputDirAvail, _ := ensureOutputDir(command, proc.absOutputDir, proc.subPaths[i], &checkedDirs)
 				if outputDirAvail {
 					copyFile(command, proc.subPaths[i])
 				}
@@ -48,27 +48,21 @@ func processCopy(command *tCommand) {
 
 func copyFile(command *tCommand, subPath string) {
 	inputPath := filepath.Join(command.inputDir, subPath)
-	inputFile, inputErr := os.Open(inputPath)
-	if inputErr == nil {
+	inputFile, err := os.Open(inputPath)
+	if err == nil {
+		var outputFile *os.File
+		defer inputFile.Close()
 		outputPath := filepath.Join(command.outputDir, subPath)
-		outputFile, outputErr := os.OpenFile(outputPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
-		if outputErr == nil {
-			_, copyErr := io.Copy(outputFile, inputFile)
-			if copyErr == nil {
-				outputFile.Sync()
-			} else if !command.silent {
-				fmt.Println("Warning:", copyErr.Error())
+		outputFile, err = os.OpenFile(outputPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+		if err == nil {
+			defer outputFile.Close()
+			_, err = io.Copy(outputFile, inputFile)
+			if err == nil {
+				err = outputFile.Sync()
 			}
-			outputFile.Close()
-		} else if !command.silent {
-			fmt.Println("Warning:", outputErr.Error())
 		}
-		inputFile.Close()
-	} else if !command.silent {
-		fmt.Println("Warning:", inputErr.Error())
 	}
-}
-
-func fileHasContent() (bool, error) {
-	return true, nil
+	if err != nil && !command.silent {
+		fmt.Println("Warning:", err.Error())
+	}
 }
