@@ -17,6 +17,7 @@ import (
 func processCopy(command *tCommand) {
 	var proc tProcess
 	proc.initInputOutputDir(command)
+	proc.ensureOutputDir(command)
 	proc.fetchInputSubPaths(command)
 	if command.err == nil && len(proc.subPaths) > 0 {
 		checkedDirs := make(map[string]bool, 64)
@@ -35,7 +36,7 @@ func processCopy(command *tCommand) {
 		for i := 0; i < len(proc.subPaths); i++ {
 			proc.fetchResultsFromChannel(i)
 			if proc.resultsIdx[i] == 1 {
-				outputDirAvail, _ := ensureOutputDir(command, proc.absOutputDir, proc.subPaths[i], &checkedDirs)
+				outputDirAvail, _ := ensureOutputSubDir(command, proc.absOutputDir, proc.subPaths[i], &checkedDirs)
 				if outputDirAvail {
 					copyFile(command, proc.subPaths[i])
 				}

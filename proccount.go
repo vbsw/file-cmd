@@ -12,5 +12,33 @@ import (
 )
 
 func processCount(command *tCommand) {
-	fmt.Println("count not implemented, yet")
+	var proc tProcess
+	proc.initInputOutputDir(command)
+	proc.fetchInputSubPaths(command)
+	if command.err == nil {
+		var counter int
+		if len(proc.subPaths) > 0 {
+			proc.initOthers(command.threads, command.contentFilter)
+			if command.or {
+				for i := 0; i < proc.threads; i++ {
+					from, to := proc.step(i)
+					go proc.checkContainsAny(command.inputDir, from, to)
+				}
+			} else {
+				for i := 0; i < proc.threads; i++ {
+					from, to := proc.step(i)
+					go proc.checkContainsAll(command.inputDir, from, to)
+				}
+			}
+			for i := 0; i < len(proc.subPaths); i++ {
+				proc.fetchResultsFromChannel(i)
+				if proc.resultsIdx[i] == 1 {
+					counter++
+				} else if proc.resultsErr[i] != nil && !command.silent {
+					fmt.Println("Warning:", proc.resultsErr[i].Error())
+				}
+			}
+		}
+		fmt.Println(counter)
+	}
 }

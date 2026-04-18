@@ -692,12 +692,9 @@ func validateInputDirFile(command *tCommand, inputArgs, unmatchedArgs *cl.Argume
 			command.inputDir = command.inputPath
 			validateDir(command, command.inputDir, "input")
 			if command.err != nil {
-				fileName := filepath.Base(command.inputPath)
 				command.err = nil
 				command.inputDir = filepath.Dir(command.inputPath)
-				if fileName > "" && fileName != "*" {
-					command.fileNameFilter = fileName
-				}
+				command.fileNameFilter = filepath.Base(command.inputPath)
 				validateDir(command, command.inputDir, "input")
 			}
 		} else {

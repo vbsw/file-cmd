@@ -57,7 +57,6 @@ func (proc *tProcess) ensureOutputDir(command *tCommand) {
 }
 
 func (proc *tProcess) fetchInputSubPaths(command *tCommand) {
-	proc.ensureOutputDir(command)
 	if command.err == nil {
 		if command.recursive {
 			proc.fetchInputSubPathsRecursive(command)
@@ -158,8 +157,7 @@ func (proc *tProcess) checkContainsAll(inputDir string, from, to int) {
 		checking := true
 		inputPath := filepath.Join(inputDir, proc.subPaths[i])
 		if reader.Open(inputPath) {
-			checking = reader.Read(0)
-			checking = checking && reader.NRead >= proc.filterMax
+			checking = reader.Read(0) && reader.NRead >= proc.filterMax
 			for checking {
 				if match.Contains(reader.Buffer[:reader.NRead], proc.filter, match.And) {
 					break
@@ -202,10 +200,10 @@ func (proc *tProcess) checkContainsAny(inputDir string, from, to int) {
 	}
 }
 
-func ensureOutputDir(command *tCommand, absOutputDir, subPath string, checkedDirs *map[string]bool) (bool, bool) {
+func ensureOutputSubDir(command *tCommand, absOutputDir, subPath string, checkedDirs *map[string]bool) (bool, bool) {
 	outputPath := filepath.Join(absOutputDir, subPath)
 	outputDir := filepath.Dir(outputPath)
-	outputDirAvail, inMap, isSubDirRemovable := true, true, false
+	outputDirAvail, inMap, subDirRemovable := true, true, false
 	if len(outputDir) != len(absOutputDir) {
 		outputDirAvail, inMap = (*checkedDirs)[outputDir]
 		if !inMap {
@@ -220,10 +218,10 @@ func ensureOutputDir(command *tCommand, absOutputDir, subPath string, checkedDir
 				command.err = nil
 			}
 			(*checkedDirs)[outputDir] = outputDirAvail
-			isSubDirRemovable = outputDirAvail
+			subDirRemovable = outputDirAvail
 		}
 	}
-	return outputDirAvail, isSubDirRemovable
+	return outputDirAvail, subDirRemovable
 }
 
 func getBounds(strings []string) (int, int) {

@@ -17,6 +17,7 @@ import (
 func processMove(command *tCommand) {
 	var proc tProcess
 	proc.initInputOutputDir(command)
+	proc.ensureOutputDir(command)
 	proc.fetchInputSubPaths(command)
 	if command.err == nil && len(proc.subPaths) > 0 {
 		checkedDirs := make(map[string]bool, 64)
@@ -36,7 +37,7 @@ func processMove(command *tCommand) {
 		for i := 0; i < len(proc.subPaths); i++ {
 			proc.fetchResultsFromChannel(i)
 			if proc.resultsIdx[i] == 1 {
-				outputDirAvail, subRem := ensureOutputDir(command, proc.absOutputDir, proc.subPaths[i], &checkedDirs)
+				outputDirAvail, subRem := ensureOutputSubDir(command, proc.absOutputDir, proc.subPaths[i], &checkedDirs)
 				if outputDirAvail {
 					moveFile(command, proc.subPaths[i])
 					if subRem {
