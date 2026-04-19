@@ -14,7 +14,7 @@ func errMultipleUsage(args []string) error {
 	for i, arg := range args {
 		if i == 0 {
 			errStr = errStr + " \"" + arg + "\""
-		} else if !inList(args[:i], arg) {
+		} else if !isInList(args[:i], arg) {
 			errStr = errStr + ", \"" + arg + "\""
 		}
 	}
@@ -105,7 +105,7 @@ func errArgNotInteger(arg, val string) error {
 	return errors.New("argument \"" + arg + "\" must be integer, is \"" + val + "\"")
 }
 
-func inList(list []string, value string) bool {
+func isInList(list []string, value string) bool {
 	for _, val := range list {
 		if val == value {
 			return true

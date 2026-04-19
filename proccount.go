@@ -34,8 +34,8 @@ func processCount(command *tCommand) {
 				proc.fetchResultsFromChannel(i)
 				if proc.resultsIdx[i] == 1 {
 					counter++
-				} else if proc.resultsErr[i] != nil && !command.silent {
-					fmt.Println("Warning:", proc.resultsErr[i].Error())
+				} else if proc.resultsErr[i] != nil {
+					printWarning(command, proc.resultsErr[i])
 				}
 			}
 		}

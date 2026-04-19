@@ -323,3 +323,9 @@ func printCopyright() {
 	message += "Distributed under the Boost Software License, Version 1.0."
 	fmt.Println(message)
 }
+
+func printWarning(command *tCommand, err error) {
+	if !command.silent {
+		fmt.Println("Warning:", err.Error())
+	}
+}

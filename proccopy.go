@@ -8,7 +8,6 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -40,8 +39,8 @@ func processCopy(command *tCommand) {
 				if outputDirAvail {
 					copyFile(command, proc.subPaths[i])
 				}
-			} else if proc.resultsErr[i] != nil && !command.silent {
-				fmt.Println("Warning:", proc.resultsErr[i].Error())
+			} else if proc.resultsErr[i] != nil {
+				printWarning(command, proc.resultsErr[i])
 			}
 		}
 	}
@@ -63,7 +62,7 @@ func copyFile(command *tCommand, subPath string) {
 			}
 		}
 	}
-	if err != nil && !command.silent {
-		fmt.Println("Warning:", err.Error())
+	if err != nil {
+		printWarning(command, err)
 	}
 }

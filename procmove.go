@@ -8,7 +8,6 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -44,11 +43,11 @@ func processMove(command *tCommand) {
 						subDirs = append(subDirs, filepath.Dir(proc.subPaths[i]))
 					}
 				}
-			} else if proc.resultsErr[i] != nil && !command.silent {
-				fmt.Println("Warning:", proc.resultsErr[i].Error())
+			} else if proc.resultsErr[i] != nil {
+				printWarning(command, proc.resultsErr[i])
 			}
 		}
-		removeEmptyInputDir(proc.absInputDir, subDirs)
+		//removeEmptyInputDir(proc.absInputDir, subDirs)
 	}
 }
 
@@ -73,8 +72,8 @@ func moveFile(command *tCommand, subPath string) {
 				}
 			}
 		}
-		if err != nil && !command.silent {
-			fmt.Println("Warning:", err.Error())
+		if err != nil {
+			printWarning(command, err)
 		}
 	}
 }
