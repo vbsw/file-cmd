@@ -31,6 +31,7 @@ func printInfo() {
 	message += "    cp         copy files\n"
 	message += "    mv         move files\n"
 	message += "    rm         delete files\n"
+	message += "    clean      remove empty folders and files\n"
 	message += "    text       generate random text"
 	fmt.Println(message)
 }
@@ -47,6 +48,7 @@ func printInfoExample() {
 	message += "    cp         copy files\n"
 	message += "    mv         move files\n"
 	message += "    rm         delete files\n"
+	message += "    clean      remove empty folders and files\n"
 	message += "    text       generate random text"
 	fmt.Println(message)
 }
@@ -166,6 +168,18 @@ func printInfoRemove(cmdStr string) {
 	message += "    -s, --silent      don't output errors to screen when reading files\n"
 	message += "FILTER\n"
 	message += "    ( -f=W | W )      filter files by strings W; space or comma are separators"
+	fmt.Println(message)
+}
+
+func printInfoClean(cmdStr string) {
+	message := "USAGE\n"
+	message += "    file-cmd " + cmdStr + " INPUT-DIR {OPTION}\n"
+	message += "                      delete empty folders and empty regular files\n"
+	message += "INPUT-DIR\n"
+	message += "    [-i | --input] <directory-path>\n"
+	message += "OPTION\n"
+	message += "    -r, --recursive   recursive file iteration\n"
+	message += "    -s, --silent      don't output errors to screen when reading files"
 	fmt.Println(message)
 }
 
@@ -299,6 +313,13 @@ func printExampleRemove() {
 	message += "EXAMPLE D\n"
 	message += "    delete files recursively containing \"2026-02-02\" from current directory\n"
 	message += "    $ file-cmd rm . -r 2026-02-02"
+	fmt.Println(message)
+}
+
+func printExampleClean() {
+	message := "EXAMPLE\n"
+	message += "    delete empty folders and empty regular files from current directory\n"
+	message += "    $ file-cmd clean ."
 	fmt.Println(message)
 }
 

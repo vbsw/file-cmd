@@ -69,7 +69,7 @@ func (proc *tProcess) fetchInputSubPathsRecursive(command *tCommand) {
 	inputDirLength := len(proc.absInputDir) + 1
 	command.err = filepath.Walk(proc.absInputDir, func(path string, info os.FileInfo, err error) error {
 		if err == nil {
-			if info != nil && !info.IsDir() {
+			if info != nil && info.Mode().IsRegular() {
 				fileName := info.Name()
 				if match.WildcardMatch(fileName, command.fileNameFilter) {
 					if inputDirLength == len(path)-len(fileName) {
@@ -92,12 +92,14 @@ func (proc *tProcess) fetchInputSubPathsFlat(command *tCommand) {
 	inputDirLength := len(proc.absInputDir) + 1
 	command.err = filepath.Walk(proc.absInputDir, func(path string, info os.FileInfo, err error) error {
 		if err == nil {
-			fileName := info.Name()
-			if info != nil && !info.IsDir() && inputDirLength == len(path)-len(fileName) {
-				if match.WildcardMatch(fileName, command.fileNameFilter) {
-					proc.subPaths = append(proc.subPaths, fileName)
+			if info != nil && info.Mode().IsRegular() {
+				fileName := info.Name()
+				if inputDirLength == len(path)-len(fileName) {
+					if match.WildcardMatch(fileName, command.fileNameFilter) {
+						proc.subPaths = append(proc.subPaths, fileName)
+					}
+					return nil
 				}
-				return nil
 			}
 		} else {
 			printWarning(command, err)

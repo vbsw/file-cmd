@@ -20,7 +20,7 @@ func processMove(command *tCommand) {
 	proc.fetchInputSubPaths(command)
 	if command.err == nil && len(proc.subPaths) > 0 {
 		checkedDirs := make(map[string]bool, 64)
-		subDirs := make([]string, 64)
+		//subDirs := make([]string, 64)
 		proc.initOthers(command.threads, command.contentFilter)
 		if command.or {
 			for i := 0; i < proc.threads; i++ {
@@ -36,12 +36,13 @@ func processMove(command *tCommand) {
 		for i := 0; i < len(proc.subPaths); i++ {
 			proc.fetchResultsFromChannel(i)
 			if proc.resultsIdx[i] == 1 {
-				outputDirAvail, subRem := ensureOutputSubDir(command, proc.absOutputDir, proc.subPaths[i], &checkedDirs)
+				//outputDirAvail, subRem := ensureOutputSubDir(command, proc.absOutputDir, proc.subPaths[i], &checkedDirs)
+				outputDirAvail, _ := ensureOutputSubDir(command, proc.absOutputDir, proc.subPaths[i], &checkedDirs)
 				if outputDirAvail {
 					moveFile(command, proc.subPaths[i])
-					if subRem {
-						subDirs = append(subDirs, filepath.Dir(proc.subPaths[i]))
-					}
+					//if subRem {
+					//	subDirs = append(subDirs, filepath.Dir(proc.subPaths[i]))
+					//}
 				}
 			} else if proc.resultsErr[i] != nil {
 				printWarning(command, proc.resultsErr[i])

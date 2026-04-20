@@ -35,6 +35,8 @@ func main() {
 			printInfoMove(command.str)
 		case cmdInfoRemove:
 			printInfoRemove(command.str)
+		case cmdInfoClean:
+			printInfoClean(command.str)
 		case cmdInfoText:
 			printInfoText()
 		case cmdVersion:
@@ -53,6 +55,8 @@ func main() {
 			printExampleMove()
 		case cmdExampleRemove:
 			printExampleRemove()
+		case cmdExampleClean:
+			printExampleClean()
 		case cmdExampleText:
 			printExampleText()
 		case cmdCopyright:
@@ -71,6 +75,8 @@ func main() {
 			processMove(command)
 		case cmdRemove:
 			processRemove(command)
+		case cmdClean:
+			processClean(command)
 		case cmdText:
 			processText(command)
 		}

@@ -23,6 +23,7 @@ const (
 	idxCmdCopy
 	idxCmdMove
 	idxCmdRemove
+	idxCmdClean
 	idxCmdText
 	idxCmdTotal
 )
@@ -104,6 +105,13 @@ const (
 )
 
 const (
+	idxOptCleanInput = iota
+	idxOptCleanRecursive
+	idxOptCleanSilent
+	idxOptCleanTotal
+)
+
+const (
 	idxOptTextOutput = iota
 	idxOptTextOverwrite
 	idxOptTextSize
@@ -124,6 +132,7 @@ const (
 	cmdInfoCopy
 	cmdInfoMove
 	cmdInfoRemove
+	cmdInfoClean
 	cmdInfoText
 	cmdVersion
 	cmdExampleSplit
@@ -133,6 +142,7 @@ const (
 	cmdExampleCopy
 	cmdExampleMove
 	cmdExampleRemove
+	cmdExampleClean
 	cmdExampleText
 	cmdCopyright
 	cmdSplit
@@ -142,6 +152,7 @@ const (
 	cmdCopy
 	cmdMove
 	cmdRemove
+	cmdClean
 	cmdText
 	cmdTotal
 )
