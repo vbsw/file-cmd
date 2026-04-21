@@ -14,21 +14,27 @@ file-cmd is distributed in the hope that it will be useful, but WITHOUT ANY WARR
 
 ## Usage
 
-	file-cmd ( INFO | SPLIT/CONCATENATE )
-
+	USAGE
+	    file-cmd ( INFO | HELP | EXAMPLE | COMMAND )
 	INFO
-		-h, --help    print this help
-		-v, --version print version
-		--copyright   print copyright
-
-	SPLIT/CONCATENATE
-		[COMMAND] INPUT-FILE [OUTPUT-FILE]
-
+	    -v, --version     print version
+	    -c, --copyright   print copyright
+	HELP
+	    ( -h | --help ) [COMMAND]
+	               print this help, or print help for COMMAND
+	EXAMPLE
+	    ( -e | --example ) [COMMAND]
+	               print available examples, or print expample for COMMAND
 	COMMAND
-		-p=N          split file into N parts (chunks)
-		-b=N[U]       split file into N bytes per chunk, U = unit (k/K, m/M or g/G)
-		-l=N          split file into N lines per chunk
-		-c            concatenate files (INPUT-FILE is only one file, the first one)
+	    split      split file into multiple files
+	    concat     concatenate files
+	    ls         list files
+	    count      count files
+	    cp         copy files
+	    mv         move files
+	    rm         delete files
+	    clean      remove empty folders and files
+	    text       generate random text
 
 ## References
 - https://golang.org/doc/install
