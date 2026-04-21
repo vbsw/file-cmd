@@ -10,6 +10,7 @@ package main
 import (
 	"errors"
 	"github.com/vbsw/go-lib/cl"
+	"github.com/vbsw/go-lib/fs"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -34,10 +35,12 @@ type tCommand struct {
 	overwrite      bool
 	or             bool
 	recursive      bool
-	silent         bool
+	verbose        bool
 	lettersOnly    bool
 	upperCase      bool
 	lowerCase      bool
+	list           bool
+	all            bool
 }
 
 func getCommand(osArgs []string) *tCommand {
@@ -269,7 +272,7 @@ func validateList(command *tCommand, cmdArgs *cl.Arguments, cmdLine *cl.CommandL
 			validateInputDirFile(command, optArgs[idxOptListInput], unmatchedArgs, cmdLine)
 			command.or = optArgs[idxOptListOr].Available()
 			command.recursive = optArgs[idxOptListRecursive].Available()
-			command.silent = optArgs[idxOptListSilent].Available()
+			command.verbose = optArgs[idxOptListVerbose].Available()
 			command.contentFilter = getFilter(optArgs[idxOptListFilter], optArgs[idxOptListDelimiter], unmatchedArgs, cmdLine)
 			command.threads, command.err = getThreads(optArgs[idxOptListThreads], command.err)
 			command.id = cmdList
@@ -294,7 +297,7 @@ func validateCount(command *tCommand, cmdArgs *cl.Arguments, cmdLine *cl.Command
 			validateInputDirFile(command, optArgs[idxOptCountInput], unmatchedArgs, cmdLine)
 			command.or = optArgs[idxOptCountOr].Available()
 			command.recursive = optArgs[idxOptCountRecursive].Available()
-			command.silent = optArgs[idxOptCountSilent].Available()
+			command.verbose = optArgs[idxOptCountVerbose].Available()
 			command.contentFilter = getFilter(optArgs[idxOptCountFilter], optArgs[idxOptCountDelimiter], unmatchedArgs, cmdLine)
 			command.threads, command.err = getThreads(optArgs[idxOptCountThreads], command.err)
 			command.id = cmdCount
@@ -321,7 +324,7 @@ func validateCopy(command *tCommand, cmdArgs *cl.Arguments, cmdLine *cl.CommandL
 			command.or = optArgs[idxOptCopyOr].Available()
 			command.overwrite = optArgs[idxOptCopyOverwrite].Available()
 			command.recursive = optArgs[idxOptCopyRecursive].Available()
-			command.silent = optArgs[idxOptCopySilent].Available()
+			command.verbose = optArgs[idxOptCopyVerbose].Available()
 			command.contentFilter = getFilter(optArgs[idxOptCopyFilter], optArgs[idxOptCopyDelimiter], unmatchedArgs, cmdLine)
 			command.threads, command.err = getThreads(optArgs[idxOptCopyThreads], command.err)
 			command.id = cmdCopy
@@ -348,7 +351,7 @@ func validateMove(command *tCommand, cmdArgs *cl.Arguments, cmdLine *cl.CommandL
 			command.or = optArgs[idxOptMoveOr].Available()
 			command.overwrite = optArgs[idxOptMoveOverwrite].Available()
 			command.recursive = optArgs[idxOptMoveRecursive].Available()
-			command.silent = optArgs[idxOptMoveSilent].Available()
+			command.verbose = optArgs[idxOptMoveVerbose].Available()
 			command.contentFilter = getFilter(optArgs[idxOptMoveFilter], optArgs[idxOptMoveDelimiter], unmatchedArgs, cmdLine)
 			command.threads, command.err = getThreads(optArgs[idxOptMoveThreads], command.err)
 			command.id = cmdMove
@@ -373,7 +376,7 @@ func validateRemove(command *tCommand, cmdArgs *cl.Arguments, cmdLine *cl.Comman
 			validateInputDirFile(command, optArgs[idxOptRemoveInput], unmatchedArgs, cmdLine)
 			command.or = optArgs[idxOptRemoveOr].Available()
 			command.recursive = optArgs[idxOptRemoveRecursive].Available()
-			command.silent = optArgs[idxOptRemoveSilent].Available()
+			command.verbose = optArgs[idxOptRemoveVerbose].Available()
 			command.contentFilter = getFilter(optArgs[idxOptRemoveFilter], optArgs[idxOptRemoveDelimiter], unmatchedArgs, cmdLine)
 			command.threads, command.err = getThreads(optArgs[idxOptRemoveThreads], command.err)
 			command.id = cmdRemove
@@ -396,11 +399,24 @@ func validateClean(command *tCommand, cmdArgs *cl.Arguments, cmdLine *cl.Command
 			}
 			unmatchedArgs := cmdLine.Unmatched()
 			validateInputDirFile(command, optArgs[idxOptCleanInput], unmatchedArgs, cmdLine)
+			validateUnmatchedOption(command, unmatchedArgs, cmdLine)
+			command.all = optArgs[idxOptCleanAll].Available()
 			command.recursive = optArgs[idxOptCleanRecursive].Available()
-			command.silent = optArgs[idxOptCleanSilent].Available()
+			command.verbose = optArgs[idxOptCleanVerbose].Available()
+			command.list = optArgs[idxOptCleanList].Available()
 			command.id = cmdClean
 		} else {
 			command.err = errMultipleUsage(argMultiple.Keys)
+		}
+	}
+}
+
+func validateUnmatchedOption(command *tCommand, unmatchedArgs *cl.Arguments, cmdLine *cl.CommandLine) {
+	if command.err == nil && unmatchedArgs.Available() {
+		for i, index := range unmatchedArgs.Indices {
+			if !cmdLine.Matched[index] {
+				command.err = errUnknownOption(unmatchedArgs.Keys[i])
+			}
 		}
 	}
 }
@@ -524,7 +540,7 @@ func getOptListArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
 	argsList := make([]*cl.Arguments, idxOptListTotal, idxOptListTotal)
 	argsList[idxOptListOr] = cmdLine.Match("--or")
 	argsList[idxOptListRecursive] = cmdLine.Match("-r", "--recursive")
-	argsList[idxOptListSilent] = cmdLine.Match("-s", "--silent")
+	argsList[idxOptListVerbose] = cmdLine.Match("-v", "--verbose")
 	argsList[idxOptListInput] = cmdLine.MatchDelimited("-i", "--input")
 	argsList[idxOptListFilter] = cmdLine.MatchDelimited("-f")
 	argsList[idxOptListDelimiter] = cmdLine.MatchDelimited("-d")
@@ -536,7 +552,7 @@ func getOptCountArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
 	argsList := make([]*cl.Arguments, idxOptCountTotal, idxOptCountTotal)
 	argsList[idxOptCountOr] = cmdLine.Match("--or")
 	argsList[idxOptCountRecursive] = cmdLine.Match("-r", "--recursive")
-	argsList[idxOptCountSilent] = cmdLine.Match("-s", "--silent")
+	argsList[idxOptCountVerbose] = cmdLine.Match("-v", "--verbose")
 	argsList[idxOptCountInput] = cmdLine.MatchDelimited("-i", "--input")
 	argsList[idxOptCountFilter] = cmdLine.MatchDelimited("-f")
 	argsList[idxOptCountDelimiter] = cmdLine.MatchDelimited("-d")
@@ -549,7 +565,7 @@ func getOptCopyArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
 	argsList[idxOptCopyOr] = cmdLine.Match("--or")
 	argsList[idxOptCopyOverwrite] = cmdLine.Match("-w")
 	argsList[idxOptCopyRecursive] = cmdLine.Match("-r", "--recursive")
-	argsList[idxOptCopySilent] = cmdLine.Match("-s", "--silent")
+	argsList[idxOptCopyVerbose] = cmdLine.Match("-v", "--verbose")
 	argsList[idxOptCopyInput] = cmdLine.MatchDelimited("-i", "--input")
 	argsList[idxOptCopyOutput] = cmdLine.MatchDelimited("-o", "--output")
 	argsList[idxOptCopyFilter] = cmdLine.MatchDelimited("-f")
@@ -563,7 +579,7 @@ func getOptMoveArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
 	argsList[idxOptMoveOr] = cmdLine.Match("--or")
 	argsList[idxOptMoveOverwrite] = cmdLine.Match("-w")
 	argsList[idxOptMoveRecursive] = cmdLine.Match("-r", "--recursive")
-	argsList[idxOptMoveSilent] = cmdLine.Match("-s", "--silent")
+	argsList[idxOptMoveVerbose] = cmdLine.Match("-v", "--verbose")
 	argsList[idxOptMoveInput] = cmdLine.MatchDelimited("-i", "--input")
 	argsList[idxOptMoveOutput] = cmdLine.MatchDelimited("-o", "--output")
 	argsList[idxOptMoveFilter] = cmdLine.MatchDelimited("-f")
@@ -576,7 +592,7 @@ func getOptRemoveArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
 	argsList := make([]*cl.Arguments, idxOptRemoveTotal, idxOptRemoveTotal)
 	argsList[idxOptRemoveOr] = cmdLine.Match("--or")
 	argsList[idxOptRemoveRecursive] = cmdLine.Match("-r", "--recursive")
-	argsList[idxOptRemoveSilent] = cmdLine.Match("-s", "--silent")
+	argsList[idxOptRemoveVerbose] = cmdLine.Match("-v", "--verbose")
 	argsList[idxOptRemoveInput] = cmdLine.MatchDelimited("-i", "--input")
 	argsList[idxOptRemoveFilter] = cmdLine.MatchDelimited("-f")
 	argsList[idxOptRemoveDelimiter] = cmdLine.MatchDelimited("-d")
@@ -586,8 +602,10 @@ func getOptRemoveArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
 
 func getOptCleanArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
 	argsList := make([]*cl.Arguments, idxOptRemoveTotal, idxOptRemoveTotal)
+	argsList[idxOptCleanAll] = cmdLine.Match("-a", "--all")
 	argsList[idxOptCleanRecursive] = cmdLine.Match("-r", "--recursive")
-	argsList[idxOptCleanSilent] = cmdLine.Match("-s", "--silent")
+	argsList[idxOptCleanVerbose] = cmdLine.Match("-v", "--verbose")
+	argsList[idxOptCleanList] = cmdLine.Match("-l", "--list")
 	argsList[idxOptCleanInput] = cmdLine.MatchDelimited("-i", "--input")
 	return argsList
 }
@@ -726,10 +744,11 @@ func validateInputDirFile(command *tCommand, inputArgs, unmatchedArgs *cl.Argume
 	}
 	if command.err == nil {
 		if command.inputPath > "" {
-			command.inputDir = command.inputPath
-			validateDir(command, command.inputDir, "input")
-			if command.err != nil {
-				command.err = nil
+			var file fs.File
+			if file.IsDir(command.inputPath) {
+				command.inputDir = command.inputPath
+				command.fileNameFilter = "*"
+			} else {
 				command.inputDir = filepath.Dir(command.inputPath)
 				command.fileNameFilter = filepath.Base(command.inputPath)
 				validateDir(command, command.inputDir, "input")

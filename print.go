@@ -93,7 +93,7 @@ func printInfoList(cmdStr string) {
 	message += "OPTION\n"
 	message += "    --or              filter is OR (not AND)\n"
 	message += "    -r, --recursive   recursive file iteration\n"
-	message += "    -s, --silent      don't output errors to screen when reading files\n"
+	message += "    -v, --verbose     output warnings to screen\n"
 	message += "    -d=D              set delimiter D; default is comma, else space\n"
 	message += "                      empty D is no delimiter\n"
 	message += "    -t=N              use N threads\n"
@@ -111,7 +111,7 @@ func printInfoCount(cmdStr string) {
 	message += "OPTION\n"
 	message += "    --or              filter is OR (not AND)\n"
 	message += "    -r, --recursive   recursive file iteration\n"
-	message += "    -s, --silent      don't output errors to screen when reading files\n"
+	message += "    -v, --verbose     output warnings to screen\n"
 	message += "    -t=N              use N threads\n"
 	message += "FILTER\n"
 	message += "    ( -f=W | W )      filter files by strings W; space or comma are separators"
@@ -130,7 +130,7 @@ func printInfoCopy(cmdStr string) {
 	message += "    --or              filter is OR (not AND)\n"
 	message += "    -w                overwrite output files\n"
 	message += "    -r, --recursive   recursive file iteration\n"
-	message += "    -s, --silent      don't output errors to screen when reading files\n"
+	message += "    -v, --verbose     output warnings to screen\n"
 	message += "    -t=N              use N threads\n"
 	message += "FILTER\n"
 	message += "    ( -f=W | W )      filter files by strings W; space or comma are separators"
@@ -149,7 +149,7 @@ func printInfoMove(cmdStr string) {
 	message += "    --or              filter is OR (not AND)\n"
 	message += "    -w                overwrite output files\n"
 	message += "    -r, --recursive   recursive file iteration\n"
-	message += "    -s, --silent      don't output errors to screen when reading files\n"
+	message += "    -v, --verbose     output warnings to screen\n"
 	message += "    -t=N              use N threads\n"
 	message += "FILTER\n"
 	message += "    ( -f=W | W )      filter files by strings W; space or comma are separators"
@@ -165,7 +165,7 @@ func printInfoRemove(cmdStr string) {
 	message += "OPTION\n"
 	message += "    --or              filter is OR (not AND)\n"
 	message += "    -r, --recursive   recursive file iteration\n"
-	message += "    -s, --silent      don't output errors to screen when reading files\n"
+	message += "    -v, --verbose     output warnings to screen\n"
 	message += "FILTER\n"
 	message += "    ( -f=W | W )      filter files by strings W; space or comma are separators"
 	fmt.Println(message)
@@ -178,8 +178,10 @@ func printInfoClean(cmdStr string) {
 	message += "INPUT-DIR\n"
 	message += "    [-i | --input] <directory-path>\n"
 	message += "OPTION\n"
+	message += "    -a, --all         delete also directories\n"
 	message += "    -r, --recursive   recursive file iteration\n"
-	message += "    -s, --silent      don't output errors to screen when reading files"
+	message += "    -v, --verbose     output warnings to screen\n"
+	message += "    -l, --list        print deleted"
 	fmt.Println(message)
 }
 
@@ -346,7 +348,7 @@ func printCopyright() {
 }
 
 func printWarning(command *tCommand, err error) {
-	if !command.silent {
-		fmt.Println("Warning:", err.Error())
+	if command.verbose {
+		fmt.Println("warning:", err.Error())
 	}
 }

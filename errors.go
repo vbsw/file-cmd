@@ -29,6 +29,10 @@ func errUnknownCommand(arg string) error {
 	return errors.New("unknown command \"" + arg + "\"")
 }
 
+func errUnknownOption(opt string) error {
+	return errors.New("unknown option \"" + opt + "\"")
+}
+
 func errTooManyArguments() error {
 	return errors.New("too many arguments")
 }

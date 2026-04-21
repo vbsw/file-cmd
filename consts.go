@@ -49,7 +49,7 @@ const (
 	idxOptListInput = iota
 	idxOptListOr
 	idxOptListRecursive
-	idxOptListSilent
+	idxOptListVerbose
 	idxOptListFilter
 	idxOptListDelimiter
 	idxOptListThreads
@@ -60,7 +60,7 @@ const (
 	idxOptCountInput = iota
 	idxOptCountOr
 	idxOptCountRecursive
-	idxOptCountSilent
+	idxOptCountVerbose
 	idxOptCountFilter
 	idxOptCountDelimiter
 	idxOptCountThreads
@@ -73,7 +73,7 @@ const (
 	idxOptCopyOr
 	idxOptCopyOverwrite
 	idxOptCopyRecursive
-	idxOptCopySilent
+	idxOptCopyVerbose
 	idxOptCopyFilter
 	idxOptCopyDelimiter
 	idxOptCopyThreads
@@ -86,7 +86,7 @@ const (
 	idxOptMoveOr
 	idxOptMoveOverwrite
 	idxOptMoveRecursive
-	idxOptMoveSilent
+	idxOptMoveVerbose
 	idxOptMoveFilter
 	idxOptMoveDelimiter
 	idxOptMoveThreads
@@ -97,7 +97,7 @@ const (
 	idxOptRemoveInput = iota
 	idxOptRemoveOr
 	idxOptRemoveRecursive
-	idxOptRemoveSilent
+	idxOptRemoveVerbose
 	idxOptRemoveFilter
 	idxOptRemoveDelimiter
 	idxOptRemoveThreads
@@ -106,8 +106,10 @@ const (
 
 const (
 	idxOptCleanInput = iota
+	idxOptCleanAll
 	idxOptCleanRecursive
-	idxOptCleanSilent
+	idxOptCleanVerbose
+	idxOptCleanList
 	idxOptCleanTotal
 )
 
