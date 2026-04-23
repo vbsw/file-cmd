@@ -7,7 +7,10 @@
 
 package main
 
-import "errors"
+import (
+	"errors"
+	"strconv"
+)
 
 func errMultipleUsage(args []string) error {
 	errStr := "same parameter multiple"
@@ -94,7 +97,11 @@ func errDirCantRead(io, dir string) error {
 }
 
 func errFileExists(io, path string) error {
-	return errors.New(io + " input file already exists \"" + path + "\"")
+	return errors.New(io + " file already exists \"" + path + "\"")
+}
+
+func errCantOverwriteNotRegular(path string) error {
+	return errors.New("can't overwrite not regular file \"" + path + "\"")
 }
 
 func errUnknownState() error {
@@ -107,6 +114,10 @@ func errMissingArgValue(arg string) error {
 
 func errArgNotInteger(arg, val string) error {
 	return errors.New("argument \"" + arg + "\" must be integer, is \"" + val + "\"")
+}
+
+func errThreadsReduced(threads int) error {
+	return errors.New("thread count reduced to " + strconv.Itoa(threads))
 }
 
 func isInList(list []string, value string) bool {

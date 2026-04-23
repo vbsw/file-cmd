@@ -44,7 +44,7 @@ func processMove(command *tCommand) {
 					//	subDirs = append(subDirs, filepath.Dir(proc.subPaths[i]))
 					//}
 				}
-			} else if proc.resultsErr[i] != nil {
+			} else if proc.resultsErr[i] != nil && command.verbose {
 				printWarning(command, proc.resultsErr[i])
 			}
 		}
@@ -73,7 +73,7 @@ func moveFile(command *tCommand, subPath string) {
 				}
 			}
 		}
-		if err != nil {
+		if err != nil && command.verbose {
 			printWarning(command, err)
 		}
 	}

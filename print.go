@@ -191,11 +191,12 @@ func printInfoText() {
 	message += "                      generate random text\n"
 	message += "OUTPUT-FILE\n"
 	message += "    [-o | --output] <file-path>\n"
-	message += "                      standard output is default\n"
+	message += "                      if empty then output to console\n"
 	message += "OPTION\n"
 	message += "    -w                overwrite output file\n"
+	message += "    -t=N              use N threads\n"
 	message += "    -s=N[U]           size N of file, U = unit (k/K, m/M or g/G)\n"
-	message += "    -e=E              use line terminator E (e.g. CRLF or LF or CR)\n"
+	message += "    -n=T              use line terminator T (e.g. CRLF or LF or CR)\n"
 	message += "    -d=D              use word delimiter D (space is default)\n"
 	message += "    -f={a|l|u}        output format\n"
 	message += "                        a = letters, only\n"
@@ -319,9 +320,15 @@ func printExampleRemove() {
 }
 
 func printExampleClean() {
-	message := "EXAMPLE\n"
+	message := "EXAMPLE A\n"
+	message += "    delete empty regular files from current directory\n"
+	message += "    $ file-cmd clean .\n"
+	message += "EXAMPLE B\n"
 	message += "    delete empty folders and empty regular files from current directory\n"
-	message += "    $ file-cmd clean ."
+	message += "    $ file-cmd clean . --all"
+	message += "EXAMPLE C\n"
+	message += "    delete empty regular files from current directory und sub directories\n"
+	message += "    $ file-cmd clean . -r"
 	fmt.Println(message)
 }
 
@@ -348,7 +355,5 @@ func printCopyright() {
 }
 
 func printWarning(command *tCommand, err error) {
-	if command.verbose {
-		fmt.Println("warning:", err.Error())
-	}
+	fmt.Println("warning:", err.Error())
 }

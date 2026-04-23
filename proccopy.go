@@ -39,7 +39,7 @@ func processCopy(command *tCommand) {
 				if outputDirAvail {
 					copyFile(command, proc.subPaths[i])
 				}
-			} else if proc.resultsErr[i] != nil {
+			} else if proc.resultsErr[i] != nil && command.verbose {
 				printWarning(command, proc.resultsErr[i])
 			}
 		}

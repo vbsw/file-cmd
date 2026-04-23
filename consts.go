@@ -120,6 +120,7 @@ const (
 	idxOptTextTerminator
 	idxOptTextDelimiter
 	idxOptTextFormat
+	idxOptTextThreads
 	idxOptTextTotal
 )
 

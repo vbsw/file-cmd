@@ -33,7 +33,7 @@ func processList(command *tCommand) {
 				proc.fetchResultsFromChannel(i)
 				if proc.resultsIdx[i] == 1 {
 					fmt.Println(proc.subPaths[i])
-				} else if proc.resultsErr[i] != nil {
+				} else if proc.resultsErr[i] != nil && command.verbose {
 					printWarning(command, proc.resultsErr[i])
 				}
 			}

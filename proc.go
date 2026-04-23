@@ -81,7 +81,7 @@ func (proc *tProcess) fetchInputSubPathsRecursive(command *tCommand) {
 				}
 				return nil
 			}
-		} else {
+		} else if command.verbose {
 			printWarning(command, err)
 		}
 		return nil
@@ -101,7 +101,7 @@ func (proc *tProcess) fetchInputSubPathsFlat(command *tCommand) {
 					return nil
 				}
 			}
-		} else {
+		} else if command.verbose {
 			printWarning(command, err)
 		}
 		return nil
@@ -215,7 +215,9 @@ func ensureOutputSubDir(command *tCommand, absOutputDir, subPath string, checked
 			if command.err == nil {
 				outputDirAvail = true
 			} else {
-				printWarning(command, command.err)
+				if command.verbose {
+					printWarning(command, command.err)
+				}
 				command.err = nil
 			}
 			(*checkedDirs)[outputDir] = outputDirAvail
