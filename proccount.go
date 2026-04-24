@@ -35,7 +35,7 @@ func processCount(command *tCommand) {
 				if proc.resultsIdx[i] == 1 {
 					counter++
 				} else if proc.resultsErr[i] != nil && command.verbose {
-					printWarning(command, proc.resultsErr[i])
+					printWarningError(command, proc.resultsErr[i])
 				}
 			}
 		}

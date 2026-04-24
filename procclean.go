@@ -38,7 +38,7 @@ func processClean(command *tCommand) {
 						}
 					}
 				} else if command.verbose {
-					printWarning(command, err)
+					printWarningError(command, err)
 				}
 			}
 		}

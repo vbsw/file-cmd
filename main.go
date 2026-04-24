@@ -9,7 +9,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 )
 
@@ -82,6 +81,6 @@ func main() {
 		}
 	}
 	if command.err != nil {
-		fmt.Println("error:", command.err.Error())
+		printError(command, command.err)
 	}
 }

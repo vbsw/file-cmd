@@ -121,6 +121,7 @@ const (
 	idxOptTextDelimiter
 	idxOptTextFormat
 	idxOptTextThreads
+	idxOptTextVerbose
 	idxOptTextTotal
 )
 

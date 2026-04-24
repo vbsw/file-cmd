@@ -45,7 +45,7 @@ func processMove(command *tCommand) {
 					//}
 				}
 			} else if proc.resultsErr[i] != nil && command.verbose {
-				printWarning(command, proc.resultsErr[i])
+				printWarningError(command, proc.resultsErr[i])
 			}
 		}
 		//removeEmptyInputDir(proc.absInputDir, subDirs)
@@ -74,7 +74,7 @@ func moveFile(command *tCommand, subPath string) {
 			}
 		}
 		if err != nil && command.verbose {
-			printWarning(command, err)
+			printWarningError(command, err)
 		}
 	}
 }

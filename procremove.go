@@ -36,10 +36,10 @@ func processRemove(command *tCommand) {
 					inputPath := filepath.Join(command.inputDir, proc.subPaths[i])
 					err := os.Remove(inputPath)
 					if err != nil && command.verbose {
-						printWarning(command, err)
+						printWarningError(command, err)
 					}
 				} else if proc.resultsErr[i] != nil && command.verbose {
-					printWarning(command, proc.resultsErr[i])
+					printWarningError(command, proc.resultsErr[i])
 				}
 			}
 		}

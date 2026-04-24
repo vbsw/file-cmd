@@ -434,6 +434,7 @@ func validateText(command *tCommand, cmdArgs *cl.Arguments, cmdLine *cl.CommandL
 			command.bytes, command.err = argValToBytes(optArgs[idxOptTextSize], command.err)
 			command.lineTerminator = getLineTerminator(optArgs[idxOptTextTerminator])
 			command.delimiter = optArgs[idxOptTextDelimiter].ValueAt(0, " ")
+			command.verbose = optArgs[idxOptTextVerbose].Available()
 			command.id = cmdText
 			validateOverwrite(command)
 		} else {
@@ -599,11 +600,13 @@ func getOptCleanArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
 func getOptTextArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
 	argsList := make([]*cl.Arguments, idxOptTextTotal, idxOptTextTotal)
 	argsList[idxOptTextOutput] = cmdLine.MatchDelimited("-o", "--output")
+	argsList[idxOptTextOverwrite] = cmdLine.Match("-w")
 	argsList[idxOptTextSize] = cmdLine.MatchDelimited("-s")
 	argsList[idxOptTextTerminator] = cmdLine.MatchDelimited("-e")
 	argsList[idxOptTextDelimiter] = cmdLine.MatchDelimited("-d")
 	argsList[idxOptTextFormat] = cmdLine.MatchDelimited("-f")
-	argsList[idxOptTextOverwrite] = cmdLine.Match("-w")
+	argsList[idxOptTextThreads] = cmdLine.MatchDelimited("-t")
+	argsList[idxOptTextVerbose] = cmdLine.MatchDelimited("-v")
 	return argsList
 }
 

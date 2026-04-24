@@ -170,7 +170,7 @@ func adjustThreadCount(command *tCommand) {
 		if int64(command.threads) > threads {
 			command.threads = int(threads)
 			if command.verbose {
-				printWarning(command, errThreadsReduced(command.threads))
+				printWarningInfo(command, errThreadsReduced(command.threads))
 			}
 		}
 	}

@@ -40,7 +40,7 @@ func processCopy(command *tCommand) {
 					copyFile(command, proc.subPaths[i])
 				}
 			} else if proc.resultsErr[i] != nil && command.verbose {
-				printWarning(command, proc.resultsErr[i])
+				printWarningError(command, proc.resultsErr[i])
 			}
 		}
 	}
@@ -63,6 +63,6 @@ func copyFile(command *tCommand, subPath string) {
 		}
 	}
 	if err != nil {
-		printWarning(command, err)
+		printWarningError(command, err)
 	}
 }

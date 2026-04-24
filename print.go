@@ -354,6 +354,14 @@ func printCopyright() {
 	fmt.Println(message)
 }
 
-func printWarning(command *tCommand, err error) {
-	fmt.Println("warning:", err.Error())
+func printError(command *tCommand, err error) {
+	fmt.Println("[ERROR]", err.Error())
+}
+
+func printWarningError(command *tCommand, err error) {
+	fmt.Println("[WARNING]", err.Error())
+}
+
+func printWarningInfo(command *tCommand, err error) {
+	fmt.Println("[INFO]", err.Error())
 }

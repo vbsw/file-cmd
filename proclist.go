@@ -34,7 +34,7 @@ func processList(command *tCommand) {
 				if proc.resultsIdx[i] == 1 {
 					fmt.Println(proc.subPaths[i])
 				} else if proc.resultsErr[i] != nil && command.verbose {
-					printWarning(command, proc.resultsErr[i])
+					printWarningError(command, proc.resultsErr[i])
 				}
 			}
 		}
