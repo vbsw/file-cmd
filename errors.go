@@ -28,6 +28,14 @@ func errWrongArgumentUsage() error {
 	return errors.New("wrong argument usage")
 }
 
+func errOutputSizeNegative() error {
+	return errors.New("output size can't be negative")
+}
+
+func errOutputSizeTooBig() error {
+	return errors.New("output size is too big")
+}
+
 func errUnknownCommand(arg string) error {
 	return errors.New("unknown command \"" + arg + "\"")
 }
@@ -82,6 +90,10 @@ func errFileNotADir(io, dir string) error {
 
 func errFileWrongPathSyntax(io, path string) error {
 	return errors.New(io + " file has wrong path syntax \"" + path + "\"")
+}
+
+func errFileNotReadable(io, path string) error {
+	return errors.New(io + " file is not readable \"" + path + "\"")
 }
 
 func errDirWrongPathSyntax(io, dir string) error {

@@ -63,7 +63,7 @@ func printInfoSplit() {
 	message += "    [-o | --output] <file-path>\n"
 	message += "OPTION\n"
 	message += "    -p=N       split file into N parts (chunks)\n"
-	message += "    -b=N[U]    split file into N bytes per chunk, U = unit (k/K, m/M or g/G)\n"
+	message += "    -s=N[U]    split file into N bytes per chunk, U = unit (k/K, m/M or g/G)\n"
 	message += "    -l=N       split file into N lines per chunk\n"
 	message += "    -w         overwrite output files"
 	fmt.Println(message)

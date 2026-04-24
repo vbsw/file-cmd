@@ -220,15 +220,12 @@ func validateSplit(command *tCommand, cmdArgs *cl.Arguments, cmdLine *cl.Command
 			if command.outputPath == "" {
 				command.outputPath = command.inputPath
 			}
-			validateOutputFile(command, ".0")
 			command.parts, command.err = argValToInt(optArgs[idxOptSplitParts], 0, command.err)
-			command.bytes, command.err = argValToBytes(optArgs[idxOptSplitBytes], command.err)
+			command.bytes, command.err = argValToBytes(optArgs[idxOptSplitSize], command.err)
 			command.lines, command.err = argValToInt(optArgs[idxOptSplitLines], 0, command.err)
+			validateSplitSize(command)
 			command.overwrite = optArgs[idxOptSplitOverwrite].Available()
 			command.id = cmdSplit
-			if command.parts <= 0 && command.bytes <= 0 && command.lines <= 0 {
-				command.parts = 2
-			}
 		} else {
 			command.err = errMultipleUsage(argMultiple.Keys)
 		}
@@ -507,7 +504,7 @@ func getCmdExampleId(cmdArgs []*cl.Arguments) int {
 func getOptSplitArgs(cmdLine *cl.CommandLine) []*cl.Arguments {
 	argsList := make([]*cl.Arguments, idxOptSplitTotal, idxOptSplitTotal)
 	argsList[idxOptSplitParts] = cmdLine.MatchDelimited("-p")
-	argsList[idxOptSplitBytes] = cmdLine.MatchDelimited("-b")
+	argsList[idxOptSplitSize] = cmdLine.MatchDelimited("-s")
 	argsList[idxOptSplitLines] = cmdLine.MatchDelimited("-l")
 	argsList[idxOptSplitOverwrite] = cmdLine.Match("-w")
 	argsList[idxOptSplitInput] = cmdLine.MatchDelimited("-i", "--input")
@@ -645,7 +642,7 @@ func validateInputFile(command *tCommand) {
 			info, err := os.Stat(command.inputPath)
 			if err == nil {
 				if info == nil {
-					command.err = errFileWrongPathSyntax("input", command.inputPath)
+					command.err = errFileNotReadable("input", command.inputPath)
 				} else if !info.Mode().IsRegular() {
 					command.err = errFileNotAFile("input", command.inputPath)
 				}
@@ -674,6 +671,20 @@ func validateOutputFile(command *tCommand, suffix string) {
 			}
 		} else {
 			command.err = errPathEmpty("output")
+		}
+	}
+}
+
+func validateSplitSize(command *tCommand) {
+	if command.err == nil {
+		if command.parts > 0 && (command.bytes > 0 || command.lines > 0) || (command.bytes > 0 && command.lines > 0) {
+			command.err = errWrongArgumentUsage()
+		} else if command.parts < 0 || command.bytes < 0 || command.lines < 0 {
+			command.err = errOutputSizeNegative()
+		} else if !(command.parts <= int(maxInt32)) || !(command.lines <= int(maxInt32)) {
+			command.err = errOutputSizeTooBig()
+		} else if command.parts == 0 && command.bytes == 0 && command.lines == 0 {
+			command.parts = 2
 		}
 	}
 }

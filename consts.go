@@ -8,6 +8,20 @@
 package main
 
 const (
+	textGenBufferSize  = 8 * 1024 * 1024
+	maxWordsPerLine    = 40
+	newLineProbability = 0.05
+	minWordLength      = 2
+	maxWordLength      = 20
+)
+
+const (
+	maxInt64        = int64((^uint64(0)) >> 1)
+	maxInt32        = int32((^uint32(0)) >> 1)
+	splitBufferSize = textGenBufferSize
+)
+
+const (
 	idxInfoHelp = iota
 	idxInfoVersion
 	idxInfoExample
@@ -32,7 +46,7 @@ const (
 	idxOptSplitInput = iota
 	idxOptSplitOutput
 	idxOptSplitParts
-	idxOptSplitBytes
+	idxOptSplitSize
 	idxOptSplitLines
 	idxOptSplitOverwrite
 	idxOptSplitTotal

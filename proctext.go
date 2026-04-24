@@ -15,14 +15,6 @@ import (
 	"unsafe"
 )
 
-const (
-	textGenBufferSize  = 8 * 1024 * 1024
-	maxWordsPerLine    = 40
-	newLineProbability = 0.05
-	minWordLength      = 2
-	maxWordLength      = 20
-)
-
 type tSender struct {
 	bytesSent int64
 }
