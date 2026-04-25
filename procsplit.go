@@ -39,7 +39,7 @@ func processSplit(command *tCommand) {
 			if ensureOutput(command, outputPaths) {
 				if file.Seek(0) {
 					for i, outputPath := range outputPaths {
-						if !file.CopyTo(outputPath, chunks[i]) {
+						if !file.CopyNTo(outputPath, chunks[i]) {
 							break
 						}
 					}
@@ -163,6 +163,9 @@ func getOutputPaths(outputPath string, chunks []int64) []string {
 	outputPaths := make([]string, len(chunks))
 	for i := len(chunks); i > 0; i /= 10 {
 		decimals++
+	}
+	if decimals < 3 {
+		decimals = 3
 	}
 	for i := range outputPaths {
 		outputPaths[i] = outputPath + fmt.Sprintf(".%0*d", decimals, i)

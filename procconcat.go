@@ -9,8 +9,20 @@ package main
 
 import (
 	"fmt"
+	"github.com/vbsw/go-lib/fs"
 )
 
 func processConcat(command *tCommand) {
-	fmt.Println("concat not implemented, yet")
+	var file fs.FileWriter
+	defer func() {
+		file.Close()
+		command.err = file.Err
+	}()
+	if file.Open(command.outputPath) {
+		inputPath := command.concatBase + fmt.Sprintf(".%0*d", command.concatNumLen, command.concatNumBegin)
+		for i := command.concatNumBegin + 1; file.Err == nil && fs.IsExist(inputPath); i++ {
+			file.CopyFrom(inputPath)
+			inputPath = command.concatBase + fmt.Sprintf(".%0*d", command.concatNumLen, i)
+		}
+	}
 }

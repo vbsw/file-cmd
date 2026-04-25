@@ -28,6 +28,10 @@ func errWrongArgumentUsage() error {
 	return errors.New("wrong argument usage")
 }
 
+func errInputWithoutPrefix(arg string) error {
+	return errors.New("input files without prefix are not supported \"" + arg + "\"")
+}
+
 func errOutputSizeNegative() error {
 	return errors.New("output size can't be negative")
 }

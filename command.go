@@ -25,6 +25,7 @@ type tCommand struct {
 	str            string
 	delimiter      string
 	inputDir       string
+	concatBase     string
 	outputDir      string
 	lineTerminator string
 	fileNameFilter string
@@ -33,6 +34,8 @@ type tCommand struct {
 	parts, lines   int
 	id             int
 	threads        int
+	concatNumBegin int
+	concatNumLen   int
 	overwrite      bool
 	or             bool
 	recursive      bool
@@ -212,7 +215,6 @@ func validateSplit(command *tCommand, cmdArgs *cl.Arguments, cmdLine *cl.Command
 			if cmdArgs.Count() > 1 {
 				cmdLine.RevertMatched(cmdArgs)
 				cmdLine.Matched[0] = true
-				cmdLine.Matched[len(cmdLine.Arguments)] = false
 			}
 			unmatchedArgs := cmdLine.Unmatched()
 			validateInputOutput(command, optArgs[idxOptSplitInput], optArgs[idxOptSplitOutput], unmatchedArgs)
@@ -246,8 +248,8 @@ func validateConcat(command *tCommand, cmdArgs *cl.Arguments, cmdLine *cl.Comman
 			unmatchedArgs := cmdLine.Unmatched()
 			validateInputOutput(command, optArgs[idxOptConcatInput], optArgs[idxOptConcatOutput], unmatchedArgs)
 			validateInputConcatFile(command)
-			validateOutputConcatFile(command)
 			command.overwrite = optArgs[idxOptConcatOverwrite].Available()
+			validateOutputConcatFile(command)
 			command.id = cmdConcat
 		} else {
 			command.err = errMultipleUsage(argMultiple.Keys)
@@ -659,22 +661,6 @@ func validateInputFile(command *tCommand) {
 	}
 }
 
-func validateOutputFile(command *tCommand, suffix string) {
-	if command.err == nil {
-		outputPath := command.outputPath + suffix
-		if outputPath > "" {
-			_, err := os.Stat(outputPath)
-			if err == nil || !errors.Is(err, os.ErrNotExist) {
-				command.err = errFileExists("output", command.outputPath)
-			} else if errors.Is(err, os.ErrInvalid) {
-				command.err = errFileWrongPathSyntax("output", command.outputPath)
-			}
-		} else {
-			command.err = errPathEmpty("output")
-		}
-	}
-}
-
 func validateSplitSize(command *tCommand) {
 	if command.err == nil {
 		if command.parts > 0 && (command.bytes > 0 || command.lines > 0) || (command.bytes > 0 && command.lines > 0) {
@@ -692,12 +678,32 @@ func validateSplitSize(command *tCommand) {
 func validateInputConcatFile(command *tCommand) {
 	if command.err == nil {
 		if command.inputPath > "" {
-			command.inputPath = command.inputPath + ".0"
-			validateInputFile(command)
-			if command.err != nil {
-				command.err = nil
-				command.inputPath = command.inputPath[:len(command.inputPath)-2]
-				validateInputFile(command)
+			if !validateInputConcatSuffix(command) {
+				var suffixes []string
+				if command.inputPath[len(command.inputPath)-1] != '.' {
+					suffixes = []string{".0", ".00", ".000", ".0000", ".00000", ".000000", ".0000000", ".00000000", ".000000000", ".0000000000"}
+				} else {
+					suffixes = []string{"0", "00", "000", "0000", "00000", "000000", "0000000", "00000000", "000000000", "0000000000"}
+				}
+				for _, suffix := range suffixes {
+					inputPath := command.inputPath + suffix
+					if fs.IsExist(inputPath) {
+						err := command.err
+						command.concatNumBegin = 0
+						command.concatNumLen = len(suffix) - 1
+						command.concatBase = command.inputPath
+						command.inputPath = inputPath
+						validateInputFile(command)
+						if command.err != nil && err != nil {
+							// reset to previous error
+							command.inputPath = command.concatBase
+							command.err = err
+						} else if command.concatBase[len(command.concatBase)-1] == '.' {
+							command.concatBase = command.concatBase[:len(command.concatBase)-1]
+						}
+						break
+					}
+				}
 			}
 		} else {
 			command.err = errPathEmpty("input")
@@ -705,14 +711,38 @@ func validateInputConcatFile(command *tCommand) {
 	}
 }
 
+func validateInputConcatSuffix(command *tCommand) bool {
+	dotIndex := rIndex(command.inputPath, '.')
+	if dotIndex >= 0 {
+		concatNumBegin, err := strconv.Atoi(command.inputPath[dotIndex+1:])
+		if err == nil {
+			command.concatNumBegin = concatNumBegin
+			command.concatNumLen = len(command.inputPath) - (dotIndex + 1)
+			command.concatBase = command.inputPath[:dotIndex]
+			validateInputFile(command)
+			if command.err == nil && dotIndex == 0 {
+				command.err = errInputWithoutPrefix(command.inputPath)
+			}
+			return command.err == nil
+		}
+	}
+	return false
+}
+
 func validateOutputConcatFile(command *tCommand) {
 	if command.outputPath == "" {
-		command.outputPath = command.inputPath
+		command.outputPath = command.concatBase
 	}
-	if command.outputPath > "" && command.outputPath == command.inputPath {
-		command.outputPath = command.outputPath[:len(command.outputPath)-2]
+	if command.err == nil {
+		_, err := os.Stat(command.outputPath)
+		if !os.IsNotExist(err) {
+			if errors.Is(err, os.ErrInvalid) {
+				command.err = errFileWrongPathSyntax("output", command.outputPath)
+			} else if !command.overwrite {
+				command.err = errFileExists("output", command.outputPath)
+			}
+		}
 	}
-	validateOutputFile(command, "")
 }
 
 func validateOutputTextFile(command *tCommand, outputArgs, unmatchedArgs *cl.Arguments, cmdLine *cl.CommandLine) {
