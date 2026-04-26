@@ -1,0 +1,6 @@
+github.com/vbsw/go-lib/cl v0.2.0 h1:h0EKxkCx3K5Gl7EeTM8JCkRZmh7TxTKugkYXhEr2cp4=
+github.com/vbsw/go-lib/cl v0.2.0/go.mod h1:jTcxNKmZRFv7OSKYK05pZKs2bSS5NnHQiW1uW7gWBUQ=
+github.com/vbsw/go-lib/fs v0.1.0 h1:JGbb+/8CEFxqcc8oKJK+5GrEa/GQI60Knp7N2pWTL10=
+github.com/vbsw/go-lib/fs v0.1.0/go.mod h1:emPfPgLtblwnFVLIO5wTiQHgNHvPQuI0AK2moiF6YSM=
+github.com/vbsw/go-lib/match v0.2.0 h1:4TBjHSlfmuurMrJ4wgz/liJ+gltDQA4PFyqI0QA+vuU=
+github.com/vbsw/go-lib/match v0.2.0/go.mod h1:1KVUNdjqe8fSmP2/waUuDwLzzZ9XVGcssk6xu33pKpw=

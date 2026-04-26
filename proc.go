@@ -14,8 +14,6 @@ import (
 	"path/filepath"
 )
 
-const procInitialBufferSize = 8 * 1024 * 1024
-
 type tProcess struct {
 	channel      chan tResult
 	subPaths     []string

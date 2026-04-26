@@ -117,7 +117,7 @@ func errFileExists(io, path string) error {
 }
 
 func errCantOverwriteNotRegular(path string) error {
-	return errors.New("can't overwrite not regular file \"" + path + "\"")
+	return errors.New("can't overwrite non regular file \"" + path + "\"")
 }
 
 func errUnknownState() error {

@@ -8,7 +8,12 @@
 package main
 
 const (
-	textGenBufferSize  = 8 * 1024 * 1024
+	defaultBufferSize     = 8 * 1024 * 1024
+	procInitialBufferSize = defaultBufferSize
+)
+
+const (
+	textGenBufferSize  = defaultBufferSize
 	maxWordsPerLine    = 40
 	newLineProbability = 0.05
 	minWordLength      = 2
@@ -18,7 +23,7 @@ const (
 const (
 	maxInt64        = int64((^uint64(0)) >> 1)
 	maxInt32        = int32((^uint32(0)) >> 1)
-	splitBufferSize = textGenBufferSize
+	splitBufferSize = defaultBufferSize
 )
 
 const (
