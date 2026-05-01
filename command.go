@@ -51,7 +51,7 @@ func getCommand(osArgs []string) *tCommand {
 	command := new(tCommand)
 	if len(osArgs) > 0 {
 		var args [idxInfoTotal + idxCmdTotal]*cl.Arguments
-		infoArgsList, cmdArgsList := args[:idxInfoTotal], args[idxInfoTotal:len(args)]
+		infoArgsList, cmdArgsList := args[:idxInfoTotal], args[idxInfoTotal:]
 		cmdLine := cl.New(osArgs, cl.NewDelimiter("", " ", "="))
 		command.threads = 1
 		readCmdArgs(cmdArgsList, cmdLine)   // args having values

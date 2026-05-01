@@ -1,6 +1,6 @@
 # file-cmd
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/vbsw/file-cmd.svg)](https://pkg.go.dev/github.com/vbsw/file-cmd) [![Go Report Card](https://goreportcard.com/badge/github.com/vbsw/file-cmd)](https://goreportcard.com/report/github.com/vbsw/file-cmd) [![Stability: Experimental](https://masterminds.github.io/stability/experimental.svg)](https://masterminds.github.io/stability/experimental.html)
+[![Go Reference](https://pkg.go.dev/badge/github.com/vbsw/file-cmd.svg)](https://pkg.go.dev/github.com/vbsw/file-cmd) [![Go Report Card](https://goreportcard.com/badge/github.com/vbsw/file-cmd)](https://goreportcard.com/report/github.com/vbsw/file-cmd)
 
 ## About
 file-cmd executes various commands on files. file-cmd is published on <https://github.com/vbsw/file-cmd>.
